@@ -24,11 +24,11 @@ const MovieList = () => {
     }, []);
 
     if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
+        return <ActivityIndicator size="large" color="#00ffcc" style={styles.loader} />;
     }
 
     if (error) {
-        return <Text>Error: {error}</Text>;
+        return <Text style={styles.errorText}>Error: {error}</Text>;
     }
 
     return (
@@ -38,13 +38,13 @@ const MovieList = () => {
             renderItem={({ item }) => (
                 <View style={styles.item}>
                     <Text style={styles.title}>{item.title}</Text>
-                    <Text>{item.genre}</Text>
+                    <Text style={styles.genre}>{item.genre}</Text>
                     {/* Display the raw releaseDate for debugging */}
-                    <Text>Raw Release Date: {item.releaseDate}</Text>
+                    <Text style={styles.releaseDate}>Raw Release Date: {item.releaseDate}</Text>
                     {/* Format the release date */}
-                    <Text>Formatted Date: {formatDate(item.releaseDate)}</Text>
-                    <Text>{item.duration} minutes</Text>
-                    <Text>{item.description}</Text>
+                    <Text style={styles.formattedDate}>Formatted Date: {formatDate(item.releaseDate)}</Text>
+                    <Text style={styles.duration}>{item.duration} minutes</Text>
+                    <Text style={styles.description}>{item.description}</Text>
                 </View>
             )}
         />
@@ -53,21 +53,66 @@ const MovieList = () => {
 
 // Function to format date
 const formatDate = (dateString) => {
-    console.log("Received dateString:", dateString); // Log the input
     const date = new Date(dateString);
     return isNaN(date.getTime()) ? "Invalid Date" : date.toLocaleDateString();
 };
 
 const styles = StyleSheet.create({
+    loader: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#1a1a2e', // Dark cyber background
+    },
+    errorText: {
+        color: '#ff005c', // Vibrant error color
+        fontSize: 18,
+        textAlign: 'center',
+        marginTop: 20,
+    },
     item: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
+        padding: 15,
+        marginVertical: 10,
+        backgroundColor: '#0f0f1f', // Darker background for cyber effect
+        borderRadius: 8,
+        borderWidth: 2,
+        borderColor: '#00ffcc', // Neon glow border
+        shadowColor: '#00ffcc',
+        shadowOpacity: 0.7,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 0 },
+        elevation: 5, // Shadow for Android
     },
     title: {
-        fontSize: 18,
+        fontSize: 22,
         fontWeight: 'bold',
+        color: '#00ffcc', // Neon blue
+        marginBottom: 5,
+        fontFamily: 'monospace', // Cyber-style font
+    },
+    genre: {
+        color: '#f72585', // Vibrant pink
+        fontSize: 16,
+    },
+    releaseDate: {
+        color: '#ffba08', // Neon yellow
+        fontSize: 14,
+    },
+    formattedDate: {
+        color: '#00ffcc', // Neon blue
+        fontSize: 14,
+        marginBottom: 5,
+    },
+    duration: {
+        color: '#ffba08', // Neon yellow
+        fontSize: 14,
+    },
+    description: {
+        color: '#adb5bd', // Light gray text for description
+        fontSize: 14,
+        marginTop: 10,
+        fontStyle: 'italic',
     },
 });
 
-export default MovieList; // Ensure this is at the end of the file
+export default MovieList;
