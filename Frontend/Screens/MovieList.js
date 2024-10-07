@@ -24,7 +24,7 @@ const MovieList = () => {
     }, []);
 
     if (loading) {
-        return <ActivityIndicator size="large" color="#00ffcc" style={styles.loader} />;
+        return <ActivityIndicator size="large" color="#ffcc00" style={styles.loader} />;
     }
 
     if (error) {
@@ -32,22 +32,24 @@ const MovieList = () => {
     }
 
     return (
-        <FlatList
-            data={movies}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-                <View style={styles.item}>
-                    <Text style={styles.title}>{item.title}</Text>
-                    <Text style={styles.genre}>{item.genre}</Text>
-                    {/* Display the raw releaseDate for debugging */}
-                    <Text style={styles.releaseDate}>Raw Release Date: {item.releaseDate}</Text>
-                    {/* Format the release date */}
-                    <Text style={styles.formattedDate}>Formatted Date: {formatDate(item.releaseDate)}</Text>
-                    <Text style={styles.duration}>{item.duration} minutes</Text>
-                    <Text style={styles.description}>{item.description}</Text>
-                </View>
-            )}
-        />
+        <View style={styles.container}>
+            <FlatList
+                data={movies}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                    <View style={styles.item}>
+                        <Text style={styles.title}>{item.title}</Text>
+                        <Text style={styles.genre}>{item.genre}</Text>
+                        {/* Display the raw releaseDate for debugging */}
+                        <Text style={styles.releaseDate}>Raw Release Date: {item.releaseDate}</Text>
+                        {/* Format the release date */}
+                        <Text style={styles.formattedDate}>Formatted Date: {formatDate(item.releaseDate)}</Text>
+                        <Text style={styles.duration}>{item.duration} minutes</Text>
+                        <Text style={styles.description}>{item.description}</Text>
+                    </View>
+                )}
+            />
+        </View>
     );
 };
 
@@ -58,14 +60,18 @@ const formatDate = (dateString) => {
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#000', // Black background for cinema effect
+    },
     loader: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#1a1a2e', // Dark cyber background
+        backgroundColor: '#000', // Match background
     },
     errorText: {
-        color: '#ff005c', // Vibrant error color
+        color: '#ffcc00', // Bright yellow for visibility
         fontSize: 18,
         textAlign: 'center',
         marginTop: 20,
@@ -73,11 +79,11 @@ const styles = StyleSheet.create({
     item: {
         padding: 15,
         marginVertical: 10,
-        backgroundColor: '#0f0f1f', // Darker background for cyber effect
+        backgroundColor: '#1a1a1a', // Dark gray for item background
         borderRadius: 8,
         borderWidth: 2,
-        borderColor: '#00ffcc', // Neon glow border
-        shadowColor: '#00ffcc',
+        borderColor: '#ffcc00', // Bright yellow border for visibility
+        shadowColor: '#ffcc00',
         shadowOpacity: 0.7,
         shadowRadius: 10,
         shadowOffset: { width: 0, height: 0 },
@@ -86,7 +92,7 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#00ffcc', // Neon blue
+        color: '#ffcc00', // Bright yellow
         marginBottom: 5,
         fontFamily: 'monospace', // Cyber-style font
     },
@@ -99,7 +105,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     formattedDate: {
-        color: '#00ffcc', // Neon blue
+        color: '#ffcc00', // Bright yellow
         fontSize: 14,
         marginBottom: 5,
     },
@@ -108,7 +114,7 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     description: {
-        color: '#adb5bd', // Light gray text for description
+        color: '#ccc', // Light gray text for description
         fontSize: 14,
         marginTop: 10,
         fontStyle: 'italic',
