@@ -1,6 +1,8 @@
 const express = require('express');
-const User = require('../models/User'); // Adjust the path if necessary
-const bcrypt = require('bcrypt'); // If you want to hash passwords
+const multer = require('multer');
+const path = require('path');
+const User = require('../models/User');
+const bcrypt = require('bcrypt');
 const router = express.Router();
 
 router.post('/login', async (req, res) => {
