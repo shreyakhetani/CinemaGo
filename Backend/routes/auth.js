@@ -35,10 +35,14 @@ router.post('/login', async (req, res) => {
 
 // POST Signup
 router.post('/signup', async (req, res) => {
-    const { firstName, lastName, email, phoneNumber, password } = req.body;  
+    const { firstName, lastName, email, phoneNumber, password } = req.body;
+
+    // Debugging log to see incoming data
+    console.log("Received signup request:", req.body);
 
     // Basic validation
     if (!firstName || !lastName || !email || !phoneNumber || !password) {
+        console.log("Missing fields:", { firstName, lastName, email, phoneNumber, password });
         return res.status(400).json({ message: 'Please fill in all fields.' });
     }
 
@@ -46,10 +50,11 @@ router.post('/signup', async (req, res) => {
         // Check if the user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
+            console.log("User already exists:", email);
             return res.status(400).json({ message: 'User already exists.' });
         }
 
-        // Hash the password (optional)
+        // Hash the password
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
@@ -58,13 +63,16 @@ router.post('/signup', async (req, res) => {
             lastName,
             email,
             phoneNumber,
-            password: hashedPassword, // Store hashed password
+            password: hashedPassword,
         });
 
         await user.save();
+        console.log("User saved successfully:", user);
+
         res.status(201).json({ message: 'Signup successful!' });
     } catch (error) {
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error during signup:', error); // Log exact error message
+        res.status(500).json({ message: 'Server error', error: error.message }); // Send error details to client
     }
 });
 
