@@ -36,7 +36,7 @@ export default function SignupScreen({ navigation }) {
                 Alert.alert('Signup successful!', 'You can now log in.');
                 navigation.navigate('Login');
             } else {
-                Alert.alert('Error', data.message); // Show the error message from the server
+                Alert.alert('Error', data.message);
             }
         } catch (error) {
             console.error('Error signing up:', error);

@@ -33,7 +33,7 @@ router.post('/login', async (req, res) => {
 
 // POST Signup
 router.post('/signup', async (req, res) => {
-    const { firstName, lastName, email, phoneNumber, password } = req.body;  // Remove username
+    const { firstName, lastName, email, phoneNumber, password } = req.body;  
 
     // Basic validation
     if (!firstName || !lastName || !email || !phoneNumber || !password) {

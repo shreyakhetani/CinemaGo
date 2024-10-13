@@ -37,7 +37,6 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            // Using MaterialIcons or any other icon library for a profile icon
             <MaterialIcons name={focused ? 'person' : 'person-outline'} color={color} size={24} />
           ),
         }}
