@@ -3,7 +3,6 @@ const User = require('../models/User'); // Adjust the path if necessary
 const bcrypt = require('bcrypt'); // If you want to hash passwords
 const router = express.Router();
 
-// POST login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -20,8 +19,13 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // If everything is good, send success response
-        res.status(200).json({ message: 'Login successful', userId: user._id });
+        // If everything is good, send success response with first and last name
+        res.status(200).json({ 
+            message: 'Login successful', 
+            userId: user._id,
+            firstName: user.firstName, 
+            lastName: user.lastName 
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
     }
@@ -29,10 +33,10 @@ router.post('/login', async (req, res) => {
 
 // POST Signup
 router.post('/signup', async (req, res) => {
-    const { firstName, lastName, email, username, phoneNumber, password } = req.body;
+    const { firstName, lastName, email, phoneNumber, password } = req.body;  // Remove username
 
     // Basic validation
-    if (!firstName || !lastName || !email || !username || !phoneNumber || !password) {
+    if (!firstName || !lastName || !email || !phoneNumber || !password) {
         return res.status(400).json({ message: 'Please fill in all fields.' });
     }
 
@@ -51,7 +55,6 @@ router.post('/signup', async (req, res) => {
             firstName,
             lastName,
             email,
-            username,
             phoneNumber,
             password: hashedPassword, // Store hashed password
         });

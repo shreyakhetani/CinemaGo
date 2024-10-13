@@ -18,13 +18,14 @@ export default function LoginScreen({ navigation }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password }),  // Sending email and password
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Login successful!', `Welcome back!`);
+        // Use the firstName and lastName from the response for the alert
+        Alert.alert('Login successful!', `Welcome back, ${data.firstName} ${data.lastName}!`);
         // Navigate to the home screen or wherever you want after login
       } else {
         Alert.alert('Error', data.message);

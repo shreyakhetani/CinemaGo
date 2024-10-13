@@ -5,13 +5,12 @@ export default function SignupScreen({ navigation }) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [email, setEmail] = useState('');
-    const [username, setUsername] = useState('');
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
 
     const handleSignup = async () => {
         // Basic validation
-        if (!firstName || !lastName || !email || !username || !phoneNumber || !password) {
+        if (!firstName || !lastName || !email || !phoneNumber || !password) {
             Alert.alert('Error', 'Please fill in all fields.');
             return;
         }
@@ -26,7 +25,6 @@ export default function SignupScreen({ navigation }) {
                     firstName,
                     lastName,
                     email,
-                    username,
                     phoneNumber,
                     password,
                 }),
@@ -70,13 +68,6 @@ export default function SignupScreen({ navigation }) {
                 value={email}
                 onChangeText={(text) => setEmail(text)}
                 keyboardType="email-address"
-            />
-
-            <TextInput
-                style={styles.input}
-                placeholder="Username"
-                value={username}
-                onChangeText={(text) => setUsername(text)}
             />
 
             <TextInput
