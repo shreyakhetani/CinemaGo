@@ -133,8 +133,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1b293a',
     justifyContent: 'center',
     alignItems: 'center',
-    height: 'auto',
-    marginTop: 15,
+    paddingVertical: 20,
   },
   image: {
     width: 450,
@@ -142,7 +141,9 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    gap: 30
+    gap: 30,
+    justifyContent: 'space-between',
+    marginTop: 10,
   },
   textContainer: {
     flexDirection: 'column',

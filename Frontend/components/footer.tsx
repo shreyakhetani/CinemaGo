@@ -25,7 +25,7 @@ export default function Footer() {
           />
         </G>
       </Svg>
-       <Text style= {styles.Header}>CinemaGo</Text>
+      <Text style= {styles.Header}>CinemaGo</Text>
     </View>
       <Text style= {styles.text}> Vankanlähde 9</Text>
       <Text style= {styles.text}> 13100 Hämeenlinna</Text>

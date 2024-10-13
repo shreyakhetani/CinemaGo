@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView, StyleSheet, Dimensions, Button } from 'react-native';
 import axios from 'axios';
+import { Image } from 'react-native';
+import Footer from '@/components/footer';
+
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -118,6 +121,30 @@ export default function SeatSelectionScreen() {
     }
 
     return (
+    <ScrollView>
+        {/* Movie Detail Section */}
+        <View style={styles.movieDetailContainer}>
+            <Image source={require('@/assets/images/ItEndsWithUs1.jpg')} style={styles.image} />
+            <View style={styles.textContainer}>
+                <View style={styles.content}>
+                    <View>
+                        <Text style={styles.title1}>Premiere</Text>
+                        <Text style={styles.text}>7/8/2024</Text>
+                    </View>
+                    <View>
+                        <Text style={styles.title1}>Distributor</Text>
+                        <Text style={styles.text}>SF Studios Oy</Text>
+                    </View>
+                </View>
+                <View>
+                    <Text style={styles.title1}>In the main roles</Text>
+                    <Text style={styles.text}>
+                        Jenny Slate, Justin Baldoni, Hasan Minhaj, Blake Lively, Amy Morton
+                    </Text>
+                </View>
+            </View>
+        </View>
+
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollViewContent} horizontal={false}>
                 <View style={styles.innerContainer}>
@@ -190,7 +217,10 @@ export default function SeatSelectionScreen() {
                             ))}
                         </View>
                     )}
+
+                    {/* Ticket Selection Section */}
                     <View style={styles.ticketSelectionContainer}>
+                        {/* Adult Ticket */}
                         <View style={styles.ticketType}>
                             <Text style={styles.boldText}>Adult Ticket (€15 each):</Text>
                             <View style={styles.ticketCounter}>
@@ -207,6 +237,8 @@ export default function SeatSelectionScreen() {
                                 />
                             </View>
                         </View>
+
+                        {/* Child Ticket */}
                         <View style={styles.ticketType}>
                             <Text style={styles.boldText}>Child Ticket (€12 each):</Text>
                             <View style={styles.ticketCounter}>
@@ -223,6 +255,8 @@ export default function SeatSelectionScreen() {
                                 />
                             </View>
                         </View>
+
+                        {/* Pensioner Ticket */}
                         <View style={styles.ticketType}>
                             <Text style={styles.boldText}>Pensioner Ticket (€10 each):</Text>
                             <View style={styles.ticketCounter}>
@@ -239,6 +273,8 @@ export default function SeatSelectionScreen() {
                                 />
                             </View>
                         </View>
+
+                        {/* Student Ticket */}
                         <View style={styles.ticketType}>
                             <Text style={styles.boldText}>Student Ticket (€10 each):</Text>
                             <View style={styles.ticketCounter}>
@@ -255,18 +291,53 @@ export default function SeatSelectionScreen() {
                                 />
                             </View>
                         </View>
+
+                        {/* Total Cost */}
                         <Text style={styles.boldText}>Total Cost: €{(adultTickets * 15) + (childTickets * 12) + (pensionerTickets * 10) + (studentTickets * 10)}</Text>
                     </View>
+
+                    {/* Confirm Selection Button */}
                     <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmBooking}>
                         <Text style={styles.confirmButtonText}>Confirm Selection</Text>
                     </TouchableOpacity>
                 </View>
             </ScrollView>
         </View>
+        <Footer />
+    </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
+    movieDetailContainer: {
+        backgroundColor: '#1b293a',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingVertical: 20,
+    },
+    image: {
+        width: 450,
+        height: 300,
+    },
+    textContainer: {
+        flexDirection: 'column',
+        width: '80%',
+        gap: 5,
+        marginTop: 10,
+    },
+    content: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    title1: {
+        color: '#fff',
+        fontSize: 17,
+        fontWeight: '500',
+    },
+    text: {
+        color: '#b2b2b2',
+        fontSize: 15,
+    },
     container: {
         flex: 1,
         backgroundColor: '#fff',
@@ -287,7 +358,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 12,
         color: '#333',
-        marginTop: 120,
+        marginTop: 30,
     },
     screenContainer: {
         marginBottom: 10,
@@ -374,6 +445,7 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
         marginTop: 15,
+        marginBottom: 15,
     },
     confirmButtonText: {
         color: '#fff',
