@@ -301,12 +301,12 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     screenEffect: {
-        width: '100%',
+        width: 300,
         height: 8,
-        backgroundColor: '#D3D3D3',
+        backgroundColor: '#1b293a',
         borderTopLeftRadius: 50,
         borderTopRightRadius: 50,
-        opacity: 0.5,
+        opacity: 0.75,
     },
     seatGrid: {
         flexDirection: 'column',
