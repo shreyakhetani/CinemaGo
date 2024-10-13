@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const cors = require('cors'); // Import CORS middleware
 const moviesRoutes = require('./routes/Movies'); // This should include all movie, cinema hall, and booking routes as per previous setup
 
 dotenv.config();
@@ -15,6 +16,9 @@ mongoose.connect(process.env.MONGO_URI)
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+
+// Enable CORS for all routes
+app.use(cors());  // Add this line to enable CORS
 
 // Register routes
 app.use('/api/movies', moviesRoutes); // All movie-related routes are prefixed with '/api/movies'

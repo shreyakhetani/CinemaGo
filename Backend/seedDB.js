@@ -18,7 +18,7 @@ async function seedDB() {
         // Create a sample cinema hall
         const cinemaHall = new CinemaHall({
             name: "Main Auditorium",
-            seats: Array(5).fill(Array(5).fill('free')) // Creates a 5x5 grid of free seats
+            seats: Array(10).fill(Array(10).fill('free')) // Creates a 10x10 grid of free seats
         });
         await cinemaHall.save();
         console.log('CinemaHall saved:', cinemaHall);
