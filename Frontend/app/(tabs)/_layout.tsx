@@ -1,9 +1,9 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { MaterialIcons } from '@expo/vector-icons'; // Import MaterialIcons or any icon library
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -37,7 +37,8 @@ export default function TabLayout() {
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'lock' : 'lock-outline'} color={color} />
+            // Using MaterialIcons or any other icon library for a profile icon
+            <MaterialIcons name={focused ? 'person' : 'person-outline'} color={color} size={24} />
           ),
         }}
       />
