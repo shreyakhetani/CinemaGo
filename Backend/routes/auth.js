@@ -1,10 +1,9 @@
 const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const User = require('../models/User');
-const bcrypt = require('bcrypt');
+const User = require('../models/User'); // Adjust the path if necessary
+const bcrypt = require('bcrypt'); // If you want to hash passwords
 const router = express.Router();
 
+// POST login
 router.post('/login', async (req, res) => {
     const { email, password } = req.body;
 
@@ -21,12 +20,12 @@ router.post('/login', async (req, res) => {
             return res.status(400).json({ message: 'Invalid credentials' });
         }
 
-        // If everything is good, send success response with first and last name
+        // If everything is good, send success response with user details
         res.status(200).json({ 
             message: 'Login successful', 
-            userId: user._id,
-            firstName: user.firstName, 
-            lastName: user.lastName 
+            userId: user._id, 
+            firstName: user.firstName,  // Add firstName to response
+            lastName: user.lastName      // Add lastName to response
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
@@ -37,12 +36,8 @@ router.post('/login', async (req, res) => {
 router.post('/signup', async (req, res) => {
     const { firstName, lastName, email, phoneNumber, password } = req.body;
 
-    // Debugging log to see incoming data
-    console.log("Received signup request:", req.body);
-
     // Basic validation
     if (!firstName || !lastName || !email || !phoneNumber || !password) {
-        console.log("Missing fields:", { firstName, lastName, email, phoneNumber, password });
         return res.status(400).json({ message: 'Please fill in all fields.' });
     }
 
@@ -50,11 +45,10 @@ router.post('/signup', async (req, res) => {
         // Check if the user already exists
         const existingUser = await User.findOne({ email });
         if (existingUser) {
-            console.log("User already exists:", email);
             return res.status(400).json({ message: 'User already exists.' });
         }
 
-        // Hash the password
+        // Hash the password 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Create new user
@@ -63,16 +57,14 @@ router.post('/signup', async (req, res) => {
             lastName,
             email,
             phoneNumber,
-            password: hashedPassword,
+            password: hashedPassword, // Store hashed password
         });
 
         await user.save();
-        console.log("User saved successfully:", user);
-
         res.status(201).json({ message: 'Signup successful!' });
     } catch (error) {
-        console.error('Error during signup:', error); // Log exact error message
-        res.status(500).json({ message: 'Server error', error: error.message }); // Send error details to client
+        console.error(error); // Log the error
+        res.status(500).json({ message: 'Server error', error: error.message }); // Return the error message
     }
 });
 

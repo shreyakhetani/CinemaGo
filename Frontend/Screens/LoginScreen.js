@@ -8,33 +8,33 @@ export default function LoginScreen({ navigation }) {
   const handleLogin = async () => {
     // Basic validation
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
-      return;
+        Alert.alert('Error', 'Please fill in all fields.');
+        return;
     }
 
     try {
-      const response = await fetch('http://192.168.0.12:5000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),  // Sending email and password
-      });
+        const response = await fetch('http://192.168.0.12:5000/api/auth/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email, password }),  // Sending email and password
+        });
 
-      const data = await response.json();
+        const data = await response.json();
 
-      if (response.ok) {
-        // Use the firstName and lastName from the response for the alert
-        Alert.alert('Login successful!', `Welcome back, ${data.firstName} ${data.lastName}!`);
-        // Navigate to the home screen or wherever you want after login
-      } else {
-        Alert.alert('Error', data.message);
-      }
+        if (response.ok) {
+            // Use the firstName and lastName from the response for the alert
+            Alert.alert('Login successful!', `Welcome back, ${data.firstName} ${data.lastName}!`);
+            // Navigate to the home screen or wherever you want after login
+        } else {
+            Alert.alert('Error', data.message);
+        }
     } catch (error) {
-      console.error('Error logging in:', error);
-      Alert.alert('Error', 'An error occurred. Please try again.');
+        console.error('Error logging in:', error);
+        Alert.alert('Error', 'An error occurred. Please try again.');
     }
-  };
+};
 
   return (
     <View style={styles.container}>
