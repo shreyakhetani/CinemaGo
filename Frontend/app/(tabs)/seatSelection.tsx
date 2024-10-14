@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Alert, ScrollView, Sty
 import axios from 'axios';
 import { Image } from 'react-native';
 import Footer from '@/components/footer';
+import { useRouter } from 'expo-router';
 
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -20,6 +21,7 @@ export default function SeatSelectionScreen() {
     const [pensionerTickets, setPensionerTickets] = useState(0);
     const [studentTickets, setStudentTickets] = useState(0);
 
+    const router = useRouter();
     const showId = '670a3162df788823e60e38b6';
 
     useEffect(() => {
@@ -69,12 +71,12 @@ export default function SeatSelectionScreen() {
                 setLoading(false);
             });
     };
-    
     // Fetch seat data on component load
     useEffect(() => {
         fetchSeatsData(); // Call this function when the component loads
     }, []);
     
+
     const handleConfirmBooking = async () => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
     
@@ -114,6 +116,12 @@ export default function SeatSelectionScreen() {
             console.error('Error booking seats:', error);
             Alert.alert('Booking Failed', 'The seats could not be booked. Please try again.');
         }
+
+        // Navigate to PaymentScreen and pass the selected seats
+        router.push({
+            pathname: '/(tabs)/Payment',
+            params: { selectedSeats: JSON.stringify(selectedSeats) },
+        });
     };       
 
     if (loading) {
