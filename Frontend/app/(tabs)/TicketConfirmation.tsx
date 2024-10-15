@@ -25,9 +25,13 @@ export default function TicketConfirmationScreen() {
         <View style={styles.container}>
             <Text style={styles.title}>Your Ticket</Text>
 
-            {/* Display Seat Information */}
+            {/* Display Seat Information One under Another */}
             <View style={styles.infoContainer}>
-                <Text style={styles.infoText}>Seats: {ticketData.seats}</Text>
+                {selectedSeats.map((seat, index) => (
+                    <Text key={index} style={styles.infoText}>
+                        Row {seat.row + 1}, Col {seat.col + 1}
+                    </Text>
+                ))}
             </View>
 
             {/* QR Code */}
@@ -65,7 +69,7 @@ const styles = StyleSheet.create({
     },
     infoText: {
         fontSize: 18,
-        marginBottom: 10,
+        marginBottom: 5, // Adjust spacing between seats
     },
     qrCodeContainer: {
         marginBottom: 30,
