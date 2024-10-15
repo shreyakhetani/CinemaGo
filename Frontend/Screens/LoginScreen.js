@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, StyleSheet, Modal, Pressable, Image, TouchableOpacity } from 'react-native';
+import { View, TextInput, Button, Text, StyleSheet, Modal, Pressable, Image, TouchableOpacity, Alert } from 'react-native';
 
-// Updated avatar options
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
     require('../assets/images/avatars/avatar2.jpg'),
@@ -12,20 +11,24 @@ const avatarOptions = [
 const LoginScreen = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [isModalVisible, setIsModalVisible] = useState(false); // Modal visibility state
-    const [userData, setUserData] = useState({ firstName: '', lastName: '' }); // User data state
-    const [selectedAvatar, setSelectedAvatar] = useState(avatarOptions[0]); // Selected avatar
-    const [activeTab, setActiveTab] = useState('profile'); // Tab state
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [userData, setUserData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
+    const [selectedAvatar, setSelectedAvatar] = useState(avatarOptions[0]);
+    const [activeTab, setActiveTab] = useState('profile');
+
+    // States for EditProfile
+    const [newFirstName, setNewFirstName] = useState('');
+    const [newLastName, setNewLastName] = useState('');
+    const [newPhoneNumber, setNewPhoneNumber] = useState('');
 
     const handleLogin = async () => {
-        // Basic validation
         if (!email || !password) {
             Alert.alert('Error', 'Please fill in all fields.');
             return;
         }
 
         try {
-            const response = await fetch('http://192.168.0.12:5000/api/auth/login', { // Adjust this URL to your backend
+            const response = await fetch('http://192.168.0.12:5000/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -36,9 +39,7 @@ const LoginScreen = ({ navigation }) => {
             const data = await response.json();
 
             if (response.ok) {
-                // Set the user data after a successful login
-                setUserData({ firstName: data.firstName, lastName: data.lastName });
-                // Open the profile modal
+                setUserData({ firstName: data.firstName, lastName: data.lastName, phoneNumber: data.phoneNumber });
                 setIsModalVisible(true);
             } else {
                 Alert.alert('Error', data.message || 'Login failed. Please try again.');
@@ -46,6 +47,60 @@ const LoginScreen = ({ navigation }) => {
         } catch (error) {
             console.error('Error logging in:', error);
             Alert.alert('Error', 'An error occurred. Please try again.');
+        }
+    };
+
+    const handleUpdateProfile = async () => {
+        const updatedData = {
+            email,
+            firstName: newFirstName || userData.firstName,
+            lastName: newLastName || userData.lastName,
+            phoneNumber: newPhoneNumber || userData.phoneNumber,
+        };
+
+        try {
+            const response = await fetch('http://192.168.0.12:5000/api/auth/update', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert('Success', 'Profile updated successfully');
+                setUserData({ ...userData, ...updatedData }); // Update user data state
+                setNewFirstName('');
+                setNewLastName('');
+                setNewPhoneNumber('');
+            } else {
+                Alert.alert('Error', data.message || 'Update failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            Alert.alert('Error', 'An error occurred. Please try again.');
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        const response = await fetch('http://192.168.0.12:5000/api/auth/delete', {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ email }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            Alert.alert('Success', 'Account deleted successfully');
+            setIsModalVisible(false);
+            // Optionally, redirect to another screen or perform other actions
+        } else {
+            Alert.alert('Error', data.message || 'Delete failed. Please try again.');
         }
     };
 
@@ -73,15 +128,15 @@ const LoginScreen = ({ navigation }) => {
                 Don't have an account? Sign Up
             </Text>
 
-            {/* Modal for showing the profile pop-up after login */}
             <Modal
                 animationType="slide"
                 transparent={true}
                 visible={isModalVisible}
-                onRequestClose={() => setIsModalVisible(false)} // Close modal on back button
+                onRequestClose={() => setIsModalVisible(false)}
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
+                        {/* Tab Navigation */}
                         <View style={styles.tabContainer}>
                             <TouchableOpacity
                                 style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
@@ -95,14 +150,21 @@ const LoginScreen = ({ navigation }) => {
                             >
                                 <Text style={styles.tabText}>Tickets</Text>
                             </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.tab, activeTab === 'EditProfile' && styles.activeTab]}
+                                onPress={() => setActiveTab('EditProfile')}
+                            >
+                                <Text style={styles.tabText}>EditProfile</Text>
+                            </TouchableOpacity>
                         </View>
 
+                        {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
                                 <View style={styles.avatarContainer}>
                                     <Image source={selectedAvatar} style={styles.avatar} />
                                 </View>
-                                <Text style={styles.name}>{`${userData.firstName} ${userData.lastName}`}</Text>
+                                <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
 
                                 <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
                                 <View style={styles.avatarOptionsContainer}>
@@ -110,10 +172,7 @@ const LoginScreen = ({ navigation }) => {
                                         <Pressable
                                             key={index}
                                             onPress={() => setSelectedAvatar(avatar)}
-                                            style={[
-                                                styles.avatarOption,
-                                                selectedAvatar === avatar && styles.selectedAvatarOption,
-                                            ]}
+                                            style={[styles.avatarOption, selectedAvatar === avatar && styles.selectedAvatarOption]}
                                         >
                                             <Image source={avatar} style={styles.avatarOptionImage} />
                                         </Pressable>
@@ -122,6 +181,7 @@ const LoginScreen = ({ navigation }) => {
                             </View>
                         )}
 
+                        {/* Tickets Tab */}
                         {activeTab === 'tickets' && (
                             <View style={styles.ticketSection}>
                                 <Text style={styles.ticketTitle}>Tickets</Text>
@@ -129,9 +189,36 @@ const LoginScreen = ({ navigation }) => {
                             </View>
                         )}
 
+                        {/* EditProfile Tab */}
+                        {activeTab === 'EditProfile' && (
+                            <View style={styles.EditProfileSection}>
+                                <Text style={styles.EditProfileTitle}>Edit Profile</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="First Name"
+                                    value={newFirstName}
+                                    onChangeText={setNewFirstName}
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Last Name"
+                                    value={newLastName}
+                                    onChangeText={setNewLastName}
+                                />
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Phone Number"
+                                    value={newPhoneNumber}
+                                    onChangeText={setNewPhoneNumber}
+                                />
+                                <Button title="Update Profile" onPress={handleUpdateProfile} />
+                                <Button title="Delete Account" onPress={handleDeleteAccount} color="red" />
+                            </View>
+                        )}
+
                         <Pressable
                             style={styles.closeButton}
-                            onPress={() => setIsModalVisible(false)} // Close the modal
+                            onPress={() => setIsModalVisible(false)}
                         >
                             <Text style={styles.closeButtonText}>Close</Text>
                         </Pressable>
@@ -147,7 +234,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         padding: 20,
-        backgroundColor: '#f5f5f5', // Lighter background
+        backgroundColor: '#f5f5f5',
     },
     title: {
         fontSize: 28,
@@ -162,8 +249,8 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginBottom: 15,
         paddingHorizontal: 10,
-        color: '#333', // Text color
-        backgroundColor: '#fff', // Input background color
+        color: '#333',
+        backgroundColor: '#fff',
     },
     link: {
         marginTop: 15,
@@ -174,96 +261,90 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Black transparent background
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalView: {
-        width: '90%',
-        backgroundColor: '#fff',
+        backgroundColor: 'white',
         borderRadius: 10,
         padding: 20,
-        alignItems: 'center',
+        width: '90%',
     },
     tabContainer: {
         flexDirection: 'row',
-        marginBottom: 20,
+        justifyContent: 'space-around',
     },
     tab: {
-        flex: 1,
-        padding: 10,
-        backgroundColor: '#eee',
-        alignItems: 'center',
-        borderRadius: 5,
-        marginHorizontal: 5,
+        paddingVertical: 10,
     },
     activeTab: {
-        backgroundColor: '#6200ea',
+        borderBottomWidth: 2,
+        borderBottomColor: '#6200ea',
     },
     tabText: {
-        color: '#333',
         fontSize: 16,
     },
     profileContainer: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginTop: 20,
     },
     avatarContainer: {
-        marginBottom: 10,
+        marginBottom: 20,
     },
     avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+    },
+    name: {
+        fontSize: 22,
+        marginBottom: 20,
     },
     avatarSelectionTitle: {
-        fontSize: 24,
-        color: '#333',
-        marginTop: 20,
+        fontSize: 16,
         marginBottom: 10,
-        textAlign: 'center',
     },
     avatarOptionsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginBottom: 20,
     },
     avatarOption: {
-        borderWidth: 2,
-        borderColor: '#6200ea',
-        borderRadius: 50,
         padding: 5,
+        borderRadius: 5,
+        borderWidth: 2,
+        borderColor: 'transparent',
     },
     selectedAvatarOption: {
-        borderColor: '#fff',
+        borderColor: '#6200ea',
     },
     avatarOptionImage: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 50,
+        height: 50,
+        borderRadius: 25,
     },
     ticketSection: {
-        marginTop: 30,
-        padding: 15,
-        backgroundColor: '#f0f0f0', // Lighter background for ticket section
-        borderRadius: 5,
+        marginTop: 20,
+        alignItems: 'center',
     },
     ticketTitle: {
-        fontSize: 24,
-        color: '#333',
+        fontSize: 22,
         marginBottom: 10,
     },
     ticketText: {
-        color: '#999',
-        fontSize: 18,
+        fontSize: 16,
+        color: '#333',
+    },
+    EditProfileSection: {
+        marginTop: 20,
     },
     closeButton: {
         marginTop: 20,
-        padding: 10,
         backgroundColor: '#6200ea',
+        padding: 10,
         borderRadius: 5,
     },
     closeButtonText: {
-        color: '#fff',
-        fontSize: 18,
+        color: 'white',
+        textAlign: 'center',
     },
 });
 
