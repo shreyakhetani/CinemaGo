@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const CinemaHall = require('../models/CinemaHall');
 const MovieShow = require('../models/MovieShow');
 const Booking = require('../models/Booking');
-const Movies = require('../models/Movies')
+const Movies = require('../models/MoviesSchema')
 
 // Get available seats for a showtime
 router.get('/showtimes/:id/seats', async (req, res) => {
@@ -82,6 +82,25 @@ router.get('/movies', async (req, res) => {
     }
 });
 
+// Get a movie by ID
+router.get('/movies/:id', async (req, res) => {
+    // Validate the ID format
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res.status(400).send('Invalid movie ID format');
+    }
+
+    try {
+        const movie = await Movies.findById(req.params.id);
+        if (!movie) {
+            return res.status(404).send('Movie not found');
+        }
+
+        res.json(movie);
+    } catch (error) {
+        console.error('Error fetching movie by ID:', error);
+        res.status(500).send('Server error');
+    }
+});
 
 
 module.exports = router;

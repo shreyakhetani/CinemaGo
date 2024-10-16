@@ -1,12 +1,15 @@
+import React, { useEffect, useState } from 'react';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import Footer from '@/components/footer';
-import { useRouter } from 'expo-router';
 import CircularProgress from 'react-native-circular-progress-indicator';
+import axios from 'axios'; // Import axios for fetching data
+import { useRouter } from 'expo-router'; 
 
-export default function MovieDetail() {
+export default function MovieDetail( { route }) { 
   const router = useRouter();
-
+  const { movie } = route.param;
+ 
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -19,7 +22,7 @@ export default function MovieDetail() {
           <View style={styles.content}>
             <View>
               <Text style={styles.title}>Premiere</Text>
-              <Text style={styles.text}>7/8/2024</Text>
+              <Text style={styles.text}></Text>
             </View>
             <View>
               <Text style={styles.title}>Distributor</Text>
