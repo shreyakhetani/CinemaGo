@@ -61,18 +61,19 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const fetchMovies = async () => {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/api/movies/movies`);
-        console.log('API Response:', response.data);
-        setMovies(response.data);
-      } catch (error) {
-        console.error('Error fetching movies:', error);
-      } finally {
-        setLoading(false);
-      }
+        try {
+            const response = await axios.get(`${API_BASE_URL}/api/movies/movies`);
+            console.log('API Response:', response.data);
+            setMovies(response.data.movies);  // Set only the movies array to state
+        } catch (error) {
+            console.error('Error fetching movies:', error);
+        } finally {
+            setLoading(false);
+        }
     };
     fetchMovies();
-  }, []);
+}, []);
+
 
   const handleMoviePress = (movieId: string) => {
     router.push({
