@@ -1,241 +1,243 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { Image, StyleSheet, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Image, StyleSheet, View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import Footer from '@/components/footer';
-import { useRouter } from 'expo-router';
 import CircularProgress from 'react-native-circular-progress-indicator';
+import axios from 'axios';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
+
+const images: { [key: string]: any } = {
+  'Joker': require('../../assets/images/Joker.jpeg'),
+  'WildRobot': require('../../assets/images/WildRobot.png'),
+  'ItEndsWithUs': require('../../assets/images/ItEndsWithUs.png'),
+  'splash': require('../../assets/images/splash.png'),
+};
+
+const getImageSource = (imageName: string): any => {
+  // Remove the file extension from the imageName if it exists
+  const baseName = imageName.split('.')[0];
+  
+  if (images[baseName]) {
+    return images[baseName];
+  } else {
+    console.warn(`Image not found: ${imageName}`);
+    return images['splash'];
+  }
+};
 
 export default function MovieDetail() {
   const router = useRouter();
+  const params = useLocalSearchParams();
+  const movieId = params.id as string;
+
+  const [movie, setMovie] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchMovieDetails = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
+        console.log('API Response:', JSON.stringify(response.data, null, 2)); // Debug log
+        setMovie(response.data);
+      } catch (error) {
+        console.error('Error fetching movie details:', error);
+        setError('Failed to load movie details. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchMovieDetails();
+  }, [movieId]);
+
+  const handleShowtimeSelect = (showtime: string) => {
+    router.push({
+      pathname: '/seatSelection',
+      params: { movieId, showtime }
+    });
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
+  if (error || !movie) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.errorText}>{error || 'Movie not found'}</Text>
+      </View>
+    );
+  }
 
   return (
-    <ScrollView>
+    <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
         <Image
-          source={require('@/assets/images/ItEndsWithUs1.jpg')}
+          source={getImageSource(movie.imageName)}
           style={styles.image}
+          resizeMode="cover"
         />
-
-        <View style={styles.textContainer}>
-          <View style={styles.content}>
-            <View>
-              <Text style={styles.title}>Premiere</Text>
-              <Text style={styles.text}>7/8/2024</Text>
-            </View>
-            <View>
-              <Text style={styles.title}>Distributor</Text>
-              <Text style={styles.text}>SF Studios Oy</Text>
-            </View>
-          </View>
-          <View>
-            <Text style={styles.title}>In the main roles</Text>
-            <Text style={styles.text}>
-              Jenny Slate, Justin Baldoni, Hasan Minhaj, Blake Lively, Amy Morton
-            </Text>
-          </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.movieTitle}>{movie.name || 'No Title'}</Text>
+          <InfoRow label="Premiere" value={movie.premiere ? new Date(movie.premiere).toLocaleDateString() : 'N/A'} />
+          <InfoRow label="Distributor" value={movie.distributor || 'N/A'} />
+          <InfoRow label="Duration" value={movie.duration || 'N/A'} />
+          <InfoRow label="Genre" value={movie.genre || 'N/A'} />
+          <InfoRow label="Director" value={movie.director || 'N/A'} />
+          <InfoRow label="In the main roles" value={movie.roles ? movie.roles.join(', ') : 'N/A'} />
+          <InfoRow label="Description" value={movie.description || movie.discription || 'No description available'} />
         </View>
-        <TouchableOpacity style={styles.ticketContainer} >
-          <View style={styles.ticketdetails}>
-              <Text style={styles.time}>19:30</Text>
-            <View style={styles.dateContent}>
-              <Text style={styles.date}>Sunday 13.10</Text>
-              <Text style={styles.hall}>CinemaGo, Hall 5</Text>
-            </View>
-          </View>
-          <View style={styles.vacacyContainer}>
-              <Text style={styles.language}>2D | English</Text>
-            <View style={styles.progressContainer}>
-            <View>
-            <CircularProgress
-                value={60}
-                radius={25}
-                duration={2000}
-                progressValueColor={'#ecf0f1'}
-                // maxValue={200}
-                // titleColor={''}
-                // titleStyle={{fontWeight: 'bold'}}
-              />
-              </View>
-              <View style={styles.vacancyContent}>
-              <Text style={styles.vacancyText}>Available Seats</Text>
-              <Text style={styles.seats}>50</Text>
-              </View>
-            </View>
-          </View>
-        </TouchableOpacity>
 
-        <TouchableOpacity style={styles.ticketContainer} >
-          <View style={styles.ticketdetails}>
-              <Text style={styles.time}>19:30</Text>
-            <View style={styles.dateContent}>
-              <Text style={styles.date}>Sunday 13.10</Text>
-              <Text style={styles.hall}>CinemaGo, Hall 5</Text>
-            </View>
-          </View>
-          <View style={styles.vacacyContainer}>
-              <Text style={styles.language}>2D | English</Text>
-            <View style={styles.progressContainer}>
-            <View>
-            <CircularProgress
-                value={60}
-                radius={25}
-                duration={2000}
-                progressValueColor={'#ecf0f1'}
-                // maxValue={200}
-                // titleColor={''}
-                // titleStyle={{fontWeight: 'bold'}}
-              />
-              </View>
-              <View style={styles.vacancyContent}>
-              <Text style={styles.vacancyText}>Available Seats</Text>
-              <Text style={styles.seats}>50</Text>
+        <Text style={styles.showtimesTitle}>Select Showtime:</Text>
+        {movie.time.map((showtime: string, index: number) => (
+          <TouchableOpacity 
+            key={index} 
+            style={styles.ticketContainer}
+            onPress={() => handleShowtimeSelect(showtime)}
+          >
+            <View style={styles.ticketdetails}>
+              <Text style={styles.time}>{showtime}</Text>
+              <View style={styles.dateContent}>
+                <Text style={styles.date}>{new Date().toDateString()}</Text>
+                <Text style={styles.hall}>{`CinemaGo, ${movie.halls}`}</Text>
               </View>
             </View>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.ticketContainer} >
-          <View style={styles.ticketdetails}>
-              <Text style={styles.time}>19:30</Text>
-            <View style={styles.dateContent}>
-              <Text style={styles.date}>Sunday 13.10</Text>
-              <Text style={styles.hall}>CinemaGo, Hall 5</Text>
-            </View>
-          </View>
-          <View style={styles.vacacyContainer}>
-              <Text style={styles.language}>2D | English</Text>
-            <View style={styles.progressContainer}>
-            <View>
-            <CircularProgress
-                value={60}
-                radius={25}
-                duration={2000}
-                progressValueColor={'#ecf0f1'}
-                // maxValue={200}
-                // titleColor={''}
-                // titleStyle={{fontWeight: 'bold'}}
-              />
-              </View>
-              <View style={styles.vacancyContent}>
-              <Text style={styles.vacancyText}>Available Seats</Text>
-              <Text style={styles.seats}>50</Text>
+            <View style={styles.vacacyContainer}>
+              <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
+              <View style={styles.progressContainer}>
+                <CircularProgress
+                  value={60}
+                  radius={25}
+                  duration={2000}
+                  progressValueColor={'#ecf0f1'}
+                />
+                <View style={styles.vacancyContent}>
+                  <Text style={styles.vacancyText}>Available Seats</Text>
+                  <Text style={styles.seats}>50</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        ))}
       </View>
       <Footer />
     </ScrollView>
   );
 }
 
+const InfoRow = ({ label, value }: { label: string; value: string }) => (
+  <View style={styles.infoRow}>
+    <Text style={styles.infoLabel}>{label}:</Text>
+    <Text style={styles.infoText}>{value}</Text>
+  </View>
+);
+
 const styles = StyleSheet.create({
-  container: {
+  scrollView: {
+    flex: 1,
     backgroundColor: '#1b293a',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
+  },
+  container: {
+    padding: 20,
   },
   image: {
-    width: 450,
+    width: '100%',
     height: 300,
+    resizeMode: 'cover',
+    marginBottom: 20,
   },
-  content: {
+  detailsContainer: {
+    marginBottom: 20,
+  },
+  movieTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
+  },
+  infoRow: {
     flexDirection: 'row',
-    gap: 30,
-    justifyContent: 'space-between',
-    marginTop: 10,
+    marginBottom: 5,
   },
-  textContainer: {
-    flexDirection: 'column',
-    width: '80%',
-    gap: 5,
-  },
-  title: {
+  infoLabel: {
+    fontWeight: 'bold',
     color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
+    width: 100,
   },
-  text: {
+  infoText: {
     color: '#b2b2b2',
-    fontSize: 15,
+    flex: 1,
   },
-  button: {
-    padding: 10,
-    alignItems: 'center',
-    backgroundColor: '#163d71',
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#fff',
+  showtimesTitle: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 10,
   },
   ticketContainer: {
     backgroundColor: '#fff',
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    borderWidth: 1,
-    borderColor: '#898a8c',
-    gap: 10,
     padding: 10,
-    width: '100%',
     marginBottom: 10,
-    shadowColor: '#1b293a', 
-    shadowOffset: {
-      width: 0, 
-      height: 5, 
-    },
-    shadowOpacity: 0.3, 
-    shadowRadius: 5,
+    borderRadius: 5,
   },
   ticketdetails: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 80,
-    
   },
-  time:{
-    fontSize: 35,
-    fontWeight: '600',
+  time: {
+    fontSize: 24,
+    fontWeight: 'bold',
   },
   dateContent: {
-    flexDirection: 'column',
+    alignItems: 'flex-end',
   },
   date: {
-    fontSize: 22,
-    fontWeight: '600'
-  },
-  hall:{
     fontSize: 16,
-    fontWeight: '400'
   },
-  vacacyContainer:{
+  hall: {
+    fontSize: 14,
+    color: '#666',
+  },
+  vacacyContainer: {
     flexDirection: 'row',
-    gap: 80,
-
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 10,
   },
   language: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 20,
-    marginLeft:10
+    fontSize: 14,
+    fontWeight: 'bold',
   },
-  vacancyText: {
-    fontSize: 13,
-    fontWeight: '500'
-  },
-  seats:{
-    fontSize: 25,
-    fontWeight: '700'
-  },
-  vacancyContent:{
-    flexDirection: 'column',
-  },
-  
   progressContainer: {
     flexDirection: 'row',
-    gap:7
-  }
+    alignItems: 'center',
+  },
+  vacancyContent: {
+    marginLeft: 10,
+  },
+  vacancyText: {
+    fontSize: 12,
+  },
+  seats: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: 'red',
+    fontSize: 16,
+    textAlign: 'center',
+  },
 });

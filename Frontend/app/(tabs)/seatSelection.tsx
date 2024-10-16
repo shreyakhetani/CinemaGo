@@ -7,6 +7,19 @@ import Footer from '@/components/footer';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
 
+// Add this at the top of your file, after the imports
+const images: { [key: string]: any } = {
+    'Joker': require('../../assets/images/Joker.jpeg'),
+    'WildRobot': require('../../assets/images/WildRobot.png'),
+    'ItEndsWithUs': require('../../assets/images/ItEndsWithUs.png'),
+    'splash': require('../../assets/images/splash.png'),
+};
+
+const getImageSource = (imageName: string): any => {
+    const baseName = imageName.split('.')[0];
+    return images[baseName] || images['splash'];
+};
+
 const { width: screenWidth } = Dimensions.get('window');
 
 type SeatStatus = 'free' | 'booked' | 'selected';
@@ -170,7 +183,7 @@ export default function SeatSelectionScreen() {
         <ScrollView>
             {/* Movie Detail Section */}
             <View style={styles.movieDetailContainer}>
-                <Image source={require('@/assets/images/ItEndsWithUs1.jpg')} style={styles.image} />
+                <Image source={getImageSource('ItEndsWithUs')} style={styles.image} />
                 <View style={styles.textContainer}>
                     <View style={styles.content}>
                         <View>

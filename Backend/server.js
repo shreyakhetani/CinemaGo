@@ -1,29 +1,45 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const cors = require('cors'); // Import CORS middleware
-const moviesRoutes = require('./routes/Movies'); // This should include all movie, cinema hall, and booking routes as per previous setup
+const cors = require('cors');
+const path = require('path');
+const moviesRoutes = require('./routes/Movies');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB Atlas
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('Connected to MongoDB Atlas'))
-    .catch(err => console.error('MongoDB connection failed:', err.message));
+// Enhanced error handling for MongoDB connection
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+})
+.then(() => console.log('Connected to MongoDB Atlas'))
+.catch(err => {
+    console.error('MongoDB connection failed:', err.message);
+    process.exit(1);
+});
 
-// Middleware to parse JSON bodies
+// Middleware
 app.use(express.json());
+app.use(cors());
 
-// Enable CORS for all routes
-app.use(cors());  // Add this line to enable CORS
+// Serve static files (like images)
+app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
-// Register routes
-app.use('/api/movies', moviesRoutes); // All movie-related routes are prefixed with '/api/movies'
+// Routes
+app.use('/api/movies', moviesRoutes);
 
-// Starting the server
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({
+        error: 'Something went wrong!',
+        message: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
