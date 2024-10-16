@@ -7,3 +7,4 @@ const bookingSchema = new mongoose.Schema({
 }, { collection: 'Booking' });  // Explicitly set collection name
 
 module.exports = mongoose.model('Booking', bookingSchema);
+

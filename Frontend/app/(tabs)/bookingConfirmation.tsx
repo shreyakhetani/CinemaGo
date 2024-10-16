@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 
-export default function ExploreScreen() {
+export default function BookingConfirmationScreen() {
   return (
     <View>
-      <Text>Explore Movies!</Text>
+      <Text>Booking Confirmed!</Text>
     </View>
   );
 }

@@ -27,3 +27,4 @@ app.use('/api/movies', moviesRoutes); // All movie-related routes are prefixed w
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
+
