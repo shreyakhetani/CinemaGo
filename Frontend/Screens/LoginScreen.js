@@ -165,19 +165,6 @@ const LoginScreen = ({ navigation }) => {
                                     <Image source={selectedAvatar} style={styles.avatar} />
                                 </View>
                                 <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
-
-                                <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
-                                <View style={styles.avatarOptionsContainer}>
-                                    {avatarOptions.map((avatar, index) => (
-                                        <Pressable
-                                            key={index}
-                                            onPress={() => setSelectedAvatar(avatar)}
-                                            style={[styles.avatarOption, selectedAvatar === avatar && styles.selectedAvatarOption]}
-                                        >
-                                            <Image source={avatar} style={styles.avatarOptionImage} />
-                                        </Pressable>
-                                    ))}
-                                </View>
                             </View>
                         )}
 
@@ -193,6 +180,18 @@ const LoginScreen = ({ navigation }) => {
                         {activeTab === 'EditProfile' && (
                             <View style={styles.EditProfileSection}>
                                 <Text style={styles.EditProfileTitle}>Edit Profile</Text>
+                                <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
+                                <View style={styles.avatarOptionsContainer}>
+                                    {avatarOptions.map((avatar, index) => (
+                                        <Pressable
+                                            key={index}
+                                            onPress={() => setSelectedAvatar(avatar)}
+                                            style={[styles.avatarOption, selectedAvatar === avatar && styles.selectedAvatarOption]}
+                                        >
+                                            <Image source={avatar} style={styles.avatarOptionImage} />
+                                        </Pressable>
+                                    ))}
+                                </View>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="First Name"
@@ -251,6 +250,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 10,
         color: '#333',
         backgroundColor: '#fff',
+        marginTop:10
     },
     link: {
         marginTop: 15,
@@ -300,12 +300,22 @@ const styles = StyleSheet.create({
         marginBottom: 20,
     },
     avatarSelectionTitle: {
-        fontSize: 16,
+        fontSize: 16, // Keep the font size
         marginBottom: 10,
+        textAlign: 'center', 
     },
     avatarOptionsContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-around',
+        justifyContent: 'center', // Center the avatar options horizontally
+        alignItems: 'center', // Center vertically
+        marginTop: 10,
+    },
+    EditProfileTitle: {
+        fontSize: 20, // Keep the current font size or increase slightly if needed
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 20,
+        color: '#333',
     },
     avatarOption: {
         padding: 5,
