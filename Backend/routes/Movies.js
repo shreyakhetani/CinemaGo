@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const CinemaHall = require('../models/CinemaHall');
 const MovieShow = require('../models/MovieShow');
 const Booking = require('../models/Booking');
+const Movies = require('../models/Movies')
 
 // Get available seats for a showtime
 router.get('/showtimes/:id/seats', async (req, res) => {
@@ -64,5 +65,23 @@ router.post('/book-seats', async (req, res) => {
         }
     }
 });
+
+// Get all movies
+router.get('/movies', async (req, res) => {
+    try {
+        const movies = await Movies.find();  // Fetch all movies from the Movies collection
+
+        if (movies.length === 0) {
+            return res.status(404).send('No movies found');
+        }
+
+        res.json(movies);  // Send the movies as a JSON response
+    } catch (error) {
+        console.error('Error fetching movies:', error);
+        res.status(500).send('Server error');
+    }
+});
+
+
 
 module.exports = router;
