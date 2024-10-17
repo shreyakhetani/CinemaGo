@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/auth'); 
-const movieRoutes = require('./routes/Movies');
 
 dotenv.config();
 const app = express();
@@ -25,7 +24,6 @@ app.use(cors()); // Enable CORS for all routes
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/movies', movieRoutes);
 
 // Start the server
 app.listen(PORT, () => {

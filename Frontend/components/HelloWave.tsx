@@ -1,37 +1,63 @@
-import { StyleSheet } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-  withRepeat,
-  withSequence,
-} from 'react-native-reanimated';
+import React from 'react';
+import { SafeAreaView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { createStackNavigator } from '@react-navigation/stack';
 
-import { ThemedText } from '@/components/ThemedText';
+// First screen component
+function HomeScreen({ navigation }) {
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text>
+                hello this is test    
+            </Text>
+            {/* Circle button on the right */}
+            <TouchableOpacity style={styles.circleButton} onPress={() => navigation.navigate('AnotherPage')}>
+                <Text style={styles.circleButtonText}>Go</Text>
+            </TouchableOpacity>
+        </SafeAreaView>
+    );
+}
 
-export function HelloWave() {
-  const rotationAnimation = useSharedValue(0);
+// Another page to navigate to
+function AnotherPage() {
+    return (
+        <SafeAreaView style={styles.container}>
+            <Text>
+                You are on another page!
+            </Text>
+        </SafeAreaView>
+    );
+}
 
-  rotationAnimation.value = withRepeat(
-    withSequence(withTiming(25, { duration: 150 }), withTiming(0, { duration: 150 })),
-    4 // Run the animation 4 times
-  );
+const Stack = createStackNavigator();
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotationAnimation.value}deg` }],
-  }));
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <ThemedText style={styles.text}>👋</ThemedText>
-    </Animated.View>
-  );
+export default function App() {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="AnotherPage" component={AnotherPage} />
+        </Stack.Navigator>
+    );
 }
 
 const styles = StyleSheet.create({
-  text: {
-    fontSize: 28,
-    lineHeight: 32,
-    marginTop: -6,
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    circleButton: {
+        position: 'absolute',
+        right: 20,
+        bottom: 20,
+        width: 60,
+        height: 60,
+        borderRadius: 30,
+        backgroundColor: 'blue',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    circleButtonText: {
+        color: 'white',
+        fontSize: 18,
+    },
 });

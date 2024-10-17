@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Modal, Pressable, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+
 
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
@@ -37,6 +40,7 @@ const LoginScreen = ({ navigation }) => {
     const [newFirstName, setNewFirstName] = useState('');
     const [newLastName, setNewLastName] = useState('');
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
+    const router = useRouter();  // Ensure useRouter is imported correctly
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -72,6 +76,16 @@ const LoginScreen = ({ navigation }) => {
         setIsQRCodeModalVisible(true);
     };
 
+    const handleLogout = () => {
+        // Perform logout logic here (e.g., clear tokens or session data)
+        // Navigate to the index page
+        router.replace('');
+      };
+
+    const handleGoHome = () => {
+        // Navigate to the index page (home)
+        router.push('');
+      };
     const handleUpdateProfile = async () => {
         const updatedData = {
             email,
@@ -125,10 +139,21 @@ const LoginScreen = ({ navigation }) => {
             Alert.alert('Error', data.message || 'Delete failed. Please try again.');
         }
     };
-
+    const BackArrow = ({ onPress }) => {
+        return (
+          <TouchableOpacity onPress={onPress} style={styles.arrowContainer}>
+            <Image source={require('../assets/images/icons/back_arrow.png')} style={styles.arrow} />
+          </TouchableOpacity>
+        );
+      };
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Login</Text>
+             {/* Back button */}
+             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Ionicons name="arrow-back" size={24} color="black" />
+                <Text style={styles.title}>Login</Text>
+            </TouchableOpacity>
+            {/* <Text style={styles.title}>Login</Text> */}
             <TextInput
                 style={styles.input}
                 placeholder="Email"
@@ -187,7 +212,23 @@ const LoginScreen = ({ navigation }) => {
                                     <Image source={selectedAvatar} style={styles.avatar} />
                                 </View>
                                 <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
+                                 {/* Log Out Button */}
+                                 <View style={styles.buttonContainer}>
+                                    <Button 
+                                    title="Log Out" 
+                                    onPress={handleLogout} 
+                                    color="#ff5c5c" // Custom color for Log Out button
+                                    />
+                                </View>
+                                <View style={styles.buttonContainer}>
+                                    <Button 
+                                    title="Go to Home" 
+                                    onPress={handleGoHome} 
+                                    color="#4a90e2" // Custom color for Home button
+                                    />
+                                </View> 
                             </View>
+                            
                         )}
                         {/* Tickets Tab */}
                                     {activeTab === 'tickets' && (
@@ -242,7 +283,6 @@ const LoginScreen = ({ navigation }) => {
                         {/* EditProfile Tab */}
                         {activeTab === 'EditProfile' && (
                             <View style={styles.EditProfileSection}>
-                                <Text style={styles.EditProfileTitle}>Edit Profile</Text>
                                 <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
                                 <View style={styles.avatarOptionsContainer}>
                                     {avatarOptions.map((avatar, index) => (
@@ -295,14 +335,22 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
+        // alignItems: 'center',
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
+    backButton: {
+        position: 'absolute',  // Absolute positioning
+        top: 0,               // Adjust this to control vertical distance from the top
+        left: 10,              // Adjust this to control horizontal distance from the left
+        flexDirection: 'row',  // Align items in a row (horizontally)
+        alignItems: 'center',  // Vertically center items
+        padding: 10,
+    },
     title: {
-        fontSize: 28,
-        marginBottom: 20,
-        textAlign: 'center',
-        color: '#333',
+        fontSize: 18,
+        marginLeft: 8,       // Add space between the arrow and the text
+        color: 'black',
     },
     input: {
         height: 40,
@@ -323,6 +371,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
+    buttonContainer: {
+        marginBottom: 20,
+        width: '80%', // Button width relative to screen
+        borderRadius: 10,
+        overflow: 'hidden',
+      },
     modalView: {
         width: '90%',
         backgroundColor: 'white',
