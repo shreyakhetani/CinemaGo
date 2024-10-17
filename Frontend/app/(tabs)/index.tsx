@@ -169,8 +169,8 @@ const styles = StyleSheet.create({
     marginTop: 30, // Space above the text
   },
   headerText: {
-    fontFamily: 'Times New Roman',
-    fontSize: 16, // Adjust font size for readability
+    fontFamily: 'Georgia',
+    fontSize: 15, // Adjust font size for readability
     fontWeight: '400', // Normal weight for the text
     marginBottom: 15, 
     color: '#fff', // Color of the text
@@ -178,8 +178,8 @@ const styles = StyleSheet.create({
     textAlign: 'center', // Center align the text
   },
   headerText2: {
-    fontFamily: 'Times New Roman',
-    fontSize: 20, // Adjust font size for readability
+    fontFamily: 'Georgia',
+    fontSize: 17, // Adjust font size for readability
     fontWeight: '500', // Normal weight for the text
     color: '#fff', // Color of the text
     marginTop: 15, // Space above the text
