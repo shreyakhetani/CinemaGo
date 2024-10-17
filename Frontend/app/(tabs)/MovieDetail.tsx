@@ -141,7 +141,7 @@ const InfoRow = ({ label, value }: { label: string; value: string }) => (
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
-    backgroundColor: '#1b293a',
+    backgroundColor: '#000',
   },
   container: {
     marginTop: 50,
