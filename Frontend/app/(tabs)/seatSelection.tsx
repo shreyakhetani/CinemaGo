@@ -4,8 +4,12 @@ import {
     ScrollView, StyleSheet, Dimensions, Button, TextInput, Modal, Image 
 } from 'react-native';
 import Footer from '@/components/footer';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
+const { width: screenWidth } = Dimensions.get('window');
+const showId = '670e6be4114b5a5db1e84521';
 
 // Add this at the top of your file, after the imports
 const images: { [key: string]: any } = {
@@ -19,8 +23,6 @@ const getImageSource = (imageName: string): any => {
     const baseName = imageName.split('.')[0];
     return images[baseName] || images['splash'];
 };
-
-const { width: screenWidth } = Dimensions.get('window');
 
 type SeatStatus = 'free' | 'booked' | 'selected';
 type Seats = SeatStatus[][];
@@ -39,9 +41,26 @@ export default function SeatSelectionScreen() {
     const [cardNumber, setCardNumber] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
-
+    const [movie, setMovie] = useState<any>(null);
+    const params = useLocalSearchParams();
+    const movieId = params.movieId as string;
     const router = useRouter();
-    const showId = '670e6be4114b5a5db1e84521';
+
+    useEffect(() => {
+        const fetchMovieDetails = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
+                setMovie(response.data);
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+            }
+        };
+
+        if (movieId) {
+            fetchMovieDetails();
+        }
+    }, [movieId]);
+
 
     useEffect(() => {
         axios.get(`http://192.168.32.196:5000/api/movies/showtimes/${showId}/seats`)
@@ -182,27 +201,22 @@ export default function SeatSelectionScreen() {
     return (
         <ScrollView>
             {/* Movie Detail Section */}
-            <View style={styles.movieDetailContainer}>
-                <Image source={getImageSource('ItEndsWithUs')} style={styles.image} />
-                <View style={styles.textContainer}>
-                    <View style={styles.content}>
-                        <View>
-                            <Text style={styles.title1}>Premiere</Text>
-                            <Text style={styles.text}>7/8/2024</Text>
+            {movie && (
+                <View style={styles.movieDetailContainer}>
+                    <Image source={getImageSource(movie.imageName)} style={styles.image} />
+                    <View style={styles.detailsContainer}>
+                        <Text style={styles.movieTitle}>{movie.name}</Text>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoLabel}>Movie Story:</Text>
                         </View>
-                        <View>
-                            <Text style={styles.title1}>Distributor</Text>
-                            <Text style={styles.text}>SF Studios Oy</Text>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoText}>
+                                {movie.description || movie.discription || "No description available"}
+                            </Text>
                         </View>
-                    </View>
-                    <View>
-                        <Text style={styles.title1}>In the main roles</Text>
-                        <Text style={styles.text}>
-                            Jenny Slate, Justin Baldoni, Hasan Minhaj, Blake Lively, Amy Morton
-                        </Text>
                     </View>
                 </View>
-            </View>
+            )}
 
             <View style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollViewContent} horizontal={false}>
@@ -427,33 +441,45 @@ export default function SeatSelectionScreen() {
 
 const styles = StyleSheet.create({
     movieDetailContainer: {
-        backgroundColor: '#1b293a',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 20,
+        flexDirection: 'row',
+        backgroundColor: '#000',
+        padding: 10,
+        marginTop: 50, // Add top margin to account for the status bar
     },
     image: {
-        width: 450,
-        height: 300,
+        width: screenWidth * 0.4,
+        height: screenWidth * 0.6,
+        resizeMode: 'cover',
+        borderRadius: 8,
     },
-    textContainer: {
-        flexDirection: 'column',
-        width: '80%',
-        gap: 5,
-        marginTop: 10,
+    detailsContainer: {
+        flex: 1,
+        marginLeft: 10,
+        justifyContent: 'center',
     },
-    content: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    title1: {
+    movieTitle: {
+        fontFamily: 'Times New Roman',
+        fontSize: 20,
+        fontWeight: 'bold',
         color: '#fff',
-        fontSize: 17,
-        fontWeight: '500',
+        marginBottom: 15,
     },
-    text: {
+    infoRow: {
+        flexDirection: 'row',
+        marginBottom: 2,
+    },
+    infoLabel: {
+        fontFamily: 'Times New Roman',
+        fontWeight: 'bold',
+        color: '#fff',
+        width: 80,
+        fontSize: 12,
+    },
+    infoText: {
+        fontFamily: 'Times New Roman',
         color: '#b2b2b2',
-        fontSize: 15,
+        flex: 1,
+        fontSize: 12,
     },
     container: {
         flex: 1,

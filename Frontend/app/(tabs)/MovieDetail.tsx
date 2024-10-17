@@ -85,7 +85,6 @@ export default function MovieDetail() {
         />
         <View style={styles.detailsContainer}>
           <Text style={styles.movieTitle}>{movie.name || 'No Title'}</Text>
-          <InfoRow label="Premiere" value={movie.premiere ? new Date(movie.premiere).toLocaleDateString() : 'N/A'} />
           <InfoRow label="Distributor" value={movie.distributor || 'N/A'} />
           <InfoRow label="Duration" value={movie.duration || 'N/A'} />
           <InfoRow label="Genre" value={movie.genre || 'N/A'} />
