@@ -79,12 +79,18 @@ const LoginScreen = ({ navigation }) => {
     const handleLogout = () => {
         // Perform logout logic here (e.g., clear tokens or session data)
         // Navigate to the index page
-        router.replace('');
+        router.replace('/');
       };
 
     const handleGoHome = () => {
-        // Navigate to the index page (home)
-        router.push('');
+            const email = email; // Assuming you have user info like email from login
+            const avatar = selectedAvatar; // Assuming you have the selected avatar
+            
+            // Navigate to the home page with email and avatar as parameters
+            router.push({
+                pathname: '/', 
+                params: { email, avatar }
+            });
       };
     const handleUpdateProfile = async () => {
         const updatedData = {
