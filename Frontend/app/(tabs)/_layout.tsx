@@ -22,35 +22,6 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="seatSelection"
-        options={{
-          title: 'Seat Selection',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'checkmark' : 'checkmark-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="bookingConfirmation"
-        options={{
-          title: 'Booking Confirmation',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'checkmark' : 'checkmark-outline'} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'explore movies',
-          tabBarIcon: ({ color, focused }) => (
-            <TabBarIcon name={focused ? 'film' : 'film-outline'} color={color} />
-          ),
-        }}
-      />
     </Tabs>
   );
 }
-
-

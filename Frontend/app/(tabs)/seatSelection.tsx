@@ -4,10 +4,25 @@ import {
     ScrollView, StyleSheet, Dimensions, Button, TextInput, Modal, Image 
 } from 'react-native';
 import Footer from '@/components/footer';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 
-const { width: screenWidth } = Dimensions.get('window');
+const API_BASE_URL = 'http://192.168.32.196:5000';
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const showId = '670e6be4114b5a5db1e84521';
+
+// Keep the original images object
+const images: { [key: string]: any } = {
+    'Joker': require('../../assets/images/Joker.jpeg'),
+    'WildRobot': require('../../assets/images/WildRobot.png'),
+    'ItEndsWithUs': require('../../assets/images/ItEndsWithUs.png'),
+    'splash': require('../../assets/images/splash.png'),
+};
+
+const getImageSource = (imageName: string): any => {
+    const baseName = imageName.split('.')[0];
+    return images[baseName] || images['splash'];
+};
 
 type SeatStatus = 'free' | 'booked' | 'selected';
 type Seats = SeatStatus[][];
@@ -26,12 +41,28 @@ export default function SeatSelectionScreen() {
     const [cardNumber, setCardNumber] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
-
+    const [movie, setMovie] = useState<any>(null);
+    const params = useLocalSearchParams();
+    const movieId = params.movieId as string;
     const router = useRouter();
-    const showId = '670e6be4114b5a5db1e84521';
 
     useEffect(() => {
-        axios.get(`http://192.168.32.196:5000/api/movies/showtimes/${showId}/seats`)
+        const fetchMovieDetails = async () => {
+            try {
+                const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
+                setMovie(response.data);
+            } catch (error) {
+                console.error('Error fetching movie details:', error);
+            }
+        };
+
+        if (movieId) {
+            fetchMovieDetails();
+        }
+    }, [movieId]);
+
+    useEffect(() => {
+        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
             .then((response) => {
                 setSeats(response.data);
                 setLoading(false);
@@ -54,10 +85,7 @@ export default function SeatSelectionScreen() {
             setSelectedSeats([...selectedSeats, newSelected]);
             adjustTicketCounts(selectedSeats.length + 1);
         }
-    
-        console.log('Current selected seats:', selectedSeats);
     };
-    
 
     const adjustTicketCounts = (maxSeats: number) => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
@@ -71,7 +99,7 @@ export default function SeatSelectionScreen() {
 
     const fetchSeatsData = () => {
         setLoading(true);
-        axios.get(`http://192.168.32.196:5000/api/movies/showtimes/${showId}/seats`)
+        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
             .then((response) => {
                 setSeats(response.data);
                 setLoading(false);
@@ -82,11 +110,6 @@ export default function SeatSelectionScreen() {
             });
     };
 
-    useEffect(() => {
-        fetchSeatsData();
-    }, []);
-
-    // This function should just open the payment modal and not affect the seats' booking status
     const handleConfirmBooking = () => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
 
@@ -100,29 +123,19 @@ export default function SeatSelectionScreen() {
             return;
         }
 
-        // Open the payment modal without changing seat status
         setIsPaymentModalVisible(true); 
     };
 
-    // Close the payment modal and refresh seat data without marking seats as booked
     const handleCancelPayment = () => {
-        // Close the payment modal
         setIsPaymentModalVisible(false);
-    
-        // Clear the selected seats
         setSelectedSeats([]);
-    
-        // Reset ticket counts
         setAdultTickets(0);
         setChildTickets(0);
         setPensionerTickets(0);
         setStudentTickets(0);
-    
-        // Fetch the latest seats data to ensure the seat grid shows the correct status
         fetchSeatsData(); 
     };           
 
-    // Only book the seats after payment is confirmed
     const handlePayPress = async () => {
         if (!name || !cardNumber || !expiryDate || !cvv) {
             Alert.alert('Error', 'Please enter all payment details.');
@@ -130,7 +143,7 @@ export default function SeatSelectionScreen() {
         }
 
         try {
-            const response = await axios.post('http://192.168.32.196:5000/api/movies/book-seats', {
+            const response = await axios.post(`${API_BASE_URL}/api/movies/book-seats`, {
                 showId,
                 seats: selectedSeats,
             });
@@ -140,7 +153,6 @@ export default function SeatSelectionScreen() {
                 setIsPaymentModalVisible(false);
                 fetchSeatsData();
 
-                // Navigate to ticket confirmation
                 router.push({
                     pathname: '/(tabs)/TicketConfirmation',
                     params: { selectedSeats: JSON.stringify(selectedSeats) },
@@ -166,33 +178,29 @@ export default function SeatSelectionScreen() {
         return text.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
     };
 
+
     return (
         <ScrollView>
-            {/* Movie Detail Section */}
-            <View style={styles.movieDetailContainer}>
-                <Image source={require('@/assets/images/ItEndsWithUs1.jpg')} style={styles.image} />
-                <View style={styles.textContainer}>
-                    <View style={styles.content}>
-                        <View>
-                            <Text style={styles.title1}>Premiere</Text>
-                            <Text style={styles.text}>7/8/2024</Text>
+            {/* Keep the original movie detail section */}
+            {movie && (
+                <View style={styles.movieDetailContainer}>
+                    <Image source={getImageSource(movie.imageName)} style={styles.image} />
+                    <View style={styles.detailsContainer}>
+                        <Text style={styles.movieTitle}>{movie.name}</Text>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoLabel}>Movie Story:</Text>
                         </View>
-                        <View>
-                            <Text style={styles.title1}>Distributor</Text>
-                            <Text style={styles.text}>SF Studios Oy</Text>
+                        <View style={styles.infoRow}>
+                            <Text style={styles.infoText}>
+                                {movie.description || movie.discription || "No description available"}
+                            </Text>
                         </View>
-                    </View>
-                    <View>
-                        <Text style={styles.title1}>In the main roles</Text>
-                        <Text style={styles.text}>
-                            Jenny Slate, Justin Baldoni, Hasan Minhaj, Blake Lively, Amy Morton
-                        </Text>
                     </View>
                 </View>
-            </View>
+            )}
 
             <View style={styles.container}>
-                <ScrollView contentContainerStyle={styles.scrollViewContent} horizontal={false}>
+                <ScrollView contentContainerStyle={styles.scrollViewContent}>
                     <View style={styles.innerContainer}>
                         <Text style={styles.title}>Choose your seats</Text>
 
@@ -206,7 +214,6 @@ export default function SeatSelectionScreen() {
                         <View style={styles.seatGrid}>
                             {seats.map((row, rowIndex) => (
                                 <View key={rowIndex} style={styles.rowContainer}>
-                                    {/* Row Labels on the left*/}
                                     <View style={styles.rowLabel}>
                                         <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
                                     </View>
@@ -215,8 +222,6 @@ export default function SeatSelectionScreen() {
                                             key={colIndex}
                                             style={[styles.seat, {
                                                 backgroundColor: seat === 'booked' ? '#f44336' : selectedSeats.some(s => s.row === rowIndex && s.col === colIndex) ? '#FFEB3B' : '#1b293a',
-                                                width: screenWidth / seats[0].length - 14,
-                                                height: screenWidth / seats[0].length - 10
                                             }]}
                                             disabled={seat === 'booked'}
                                             onPress={() => handleSeatSelect(rowIndex, colIndex)}
@@ -224,7 +229,6 @@ export default function SeatSelectionScreen() {
                                             <Text style={styles.seatText}>{colIndex + 1}</Text>
                                         </TouchableOpacity>
                                     ))}
-                                    {/* Row Labels on the right */}
                                     <View style={styles.rowLabel}>
                                         <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
                                     </View>
@@ -232,13 +236,12 @@ export default function SeatSelectionScreen() {
                             ))}
                         </View>
 
-                        {/* Instruction Text */}
                         <Text style={styles.instructionText}>
                             Choose the seats you want. The reserved places{'\n'}
                             are shown in red and your choices in yellow.
                         </Text>
                         
-                        {/* Legend Section (stacked vertically) */}
+                        {/* Legend Section */}
                         <View style={styles.legendContainer}>
                             <View style={styles.legendItem}>
                                 <View style={[styles.legendBox, styles.freeSeat]} />
@@ -266,82 +269,35 @@ export default function SeatSelectionScreen() {
 
                         {/* Ticket Selection Section */}
                         <View style={styles.ticketSelectionContainer}>
-                            {/* Adult Ticket */}
-                            <View style={styles.ticketType}>
-                                <Text style={styles.boldText}>Adult Ticket (€15 each):</Text>
-                                <View style={styles.ticketCounter}>
-                                    <Button 
-                                        title="-" 
-                                        onPress={() => setAdultTickets(Math.max(0, adultTickets - 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                    <Text style={styles.boldText}>{` ${adultTickets} `}</Text>
-                                    <Button 
-                                        title="+" 
-                                        onPress={() => setAdultTickets(Math.min(selectedSeats.length - childTickets - pensionerTickets - studentTickets, adultTickets + 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                </View>
-                            </View>
+                            <TicketTypeSelector
+                                label="Adult Ticket (€15 each):"
+                                count={adultTickets}
+                                onDecrement={() => setAdultTickets(Math.max(0, adultTickets - 1))}
+                                onIncrement={() => setAdultTickets(Math.min(selectedSeats.length - childTickets - pensionerTickets - studentTickets, adultTickets + 1))}
+                            />
+                            <TicketTypeSelector
+                                label="Child Ticket (€12 each):"
+                                count={childTickets}
+                                onDecrement={() => setChildTickets(Math.max(0, childTickets - 1))}
+                                onIncrement={() => setChildTickets(Math.min(selectedSeats.length - adultTickets - pensionerTickets - studentTickets, childTickets + 1))}
+                            />
+                            <TicketTypeSelector
+                                label="Pensioner Ticket (€10 each):"
+                                count={pensionerTickets}
+                                onDecrement={() => setPensionerTickets(Math.max(0, pensionerTickets - 1))}
+                                onIncrement={() => setPensionerTickets(Math.min(selectedSeats.length - adultTickets - childTickets - studentTickets, pensionerTickets + 1))}
+                            />
+                            <TicketTypeSelector
+                                label="Student Ticket (€10 each):"
+                                count={studentTickets}
+                                onDecrement={() => setStudentTickets(Math.max(0, studentTickets - 1))}
+                                onIncrement={() => setStudentTickets(Math.min(selectedSeats.length - adultTickets - childTickets - pensionerTickets, studentTickets + 1))}
+                            />
 
-                            {/* Child Ticket */}
-                            <View style={styles.ticketType}>
-                                <Text style={styles.boldText}>Child Ticket (€12 each):</Text>
-                                <View style={styles.ticketCounter}>
-                                    <Button 
-                                        title="-" 
-                                        onPress={() => setChildTickets(Math.max(0, childTickets - 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                    <Text style={styles.boldText}>{` ${childTickets} `}</Text>
-                                    <Button 
-                                        title="+" 
-                                        onPress={() => setChildTickets(Math.min(selectedSeats.length - adultTickets - pensionerTickets - studentTickets, childTickets + 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Pensioner Ticket */}
-                            <View style={styles.ticketType}>
-                                <Text style={styles.boldText}>Pensioner Ticket (€10 each):</Text>
-                                <View style={styles.ticketCounter}>
-                                    <Button 
-                                        title="-" 
-                                        onPress={() => setPensionerTickets(Math.max(0, pensionerTickets - 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                    <Text style={styles.boldText}>{` ${pensionerTickets} `}</Text>
-                                    <Button 
-                                        title="+" 
-                                        onPress={() => setPensionerTickets(Math.min(selectedSeats.length - adultTickets - childTickets - studentTickets, pensionerTickets + 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Student Ticket */}
-                            <View style={styles.ticketType}>
-                                <Text style={styles.boldText}>Student Ticket (€10 each):</Text>
-                                <View style={styles.ticketCounter}>
-                                    <Button 
-                                        title="-" 
-                                        onPress={() => setStudentTickets(Math.max(0, studentTickets - 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                    <Text style={styles.boldText}>{` ${studentTickets} `}</Text>
-                                    <Button 
-                                        title="+" 
-                                        onPress={() => setStudentTickets(Math.min(selectedSeats.length - adultTickets - childTickets - pensionerTickets, studentTickets + 1))} 
-                                        color="#1b293a"  // Button color change
-                                    />
-                                </View>
-                            </View>
-
-                            {/* Total Cost */}
+                        </View>
+                        <View style={styles.totalCostContainer}>
                             <Text style={styles.boldText}>Total Cost: €{(adultTickets * 15) + (childTickets * 12) + (pensionerTickets * 10) + (studentTickets * 10)}</Text>
                         </View>
-
                         {/* Confirm Selection Button */}
                         <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmBooking}>
                             <Text style={styles.confirmButtonText}>Buy Tickets</Text>
@@ -359,8 +315,8 @@ export default function SeatSelectionScreen() {
             >
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContainer}>
-                        <ScrollView>
-                            <Text style={styles.title}>Payment Details</Text>
+                        <ScrollView contentContainerStyle={styles.modalContent}>
+                            <Text style={styles.modalTitle}>Payment Details</Text>
 
                             <TextInput
                                 placeholder="Name"
@@ -369,28 +325,25 @@ export default function SeatSelectionScreen() {
                                 style={styles.input}
                             />
                             
-                            {/* Card Number Input with Formatting */}
                             <TextInput
                                 placeholder="Card Number"
                                 value={cardNumber}
                                 keyboardType="numeric"
                                 onChangeText={(text) => setCardNumber(formatCardNumber(text))}
                                 style={styles.input}
-                                maxLength={19} // Max length for a 16-digit card with spaces
+                                maxLength={19}
                             />
                             
                             <View style={styles.row}>
-                                {/* Expiry Date Input with Formatting */}
                                 <TextInput
                                     placeholder="Ex.Date (MM/YY)"
                                     value={expiryDate}
                                     keyboardType="numeric"
                                     onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
                                     style={[styles.input, styles.smallInput]}
-                                    maxLength={5} // MM/YY format
+                                    maxLength={5}
                                 />
                                 
-                                {/* CVV Input */}
                                 <TextInput
                                     placeholder="CVV"
                                     value={cvv}
@@ -401,8 +354,12 @@ export default function SeatSelectionScreen() {
                                 />
                             </View>
 
-                            <Button title="Pay" onPress={handlePayPress} />
-                            <Button title="Cancel" onPress={handleCancelPayment} color="#888" />
+                            <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
+                                <Text style={styles.payButtonText}>Pay</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelPayment}>
+                                <Text style={styles.cancelButtonText}>Cancel</Text>
+                            </TouchableOpacity>
                         </ScrollView>
                     </View>
                 </View>
@@ -412,57 +369,92 @@ export default function SeatSelectionScreen() {
     );
 }
 
+interface TicketTypeSelectorProps {
+    label: string;
+    count: number;
+    onDecrement: () => void;
+    onIncrement: () => void;
+}
+
+const TicketTypeSelector: React.FC<TicketTypeSelectorProps> = ({ label, count, onDecrement, onIncrement }) => (
+    <View style={styles.ticketType}>
+        <Text style={styles.boldText}>{label}</Text>
+        <View style={styles.ticketCounter}>
+            <TouchableOpacity onPress={onDecrement} style={styles.counterButton}>
+                <Text style={styles.counterButtonText}>-</Text>
+            </TouchableOpacity>
+            <Text style={styles.boldText}>{` ${count} `}</Text>
+            <TouchableOpacity onPress={onIncrement} style={styles.counterButton}>
+                <Text style={styles.counterButtonText}>+</Text>
+            </TouchableOpacity>
+        </View>
+    </View>
+);
+
+
 const styles = StyleSheet.create({
+    scrollView: {
+        flex: 1,
+        backgroundColor: '#fff',
+    },
     movieDetailContainer: {
-        backgroundColor: '#1b293a',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 20,
+        flexDirection: 'row',
+        backgroundColor: '#000',
+        padding: 10,
+        paddingTop: 50, // Increased top padding for status bar
     },
     image: {
-        width: 450,
-        height: 300,
+        width: screenWidth * 0.4,
+        height: screenWidth * 0.6,
+        resizeMode: 'cover',
+        borderRadius: 8,
     },
-    textContainer: {
-        flexDirection: 'column',
-        width: '80%',
-        gap: 5,
-        marginTop: 10,
+    detailsContainer: {
+        flex: 1,
+        marginLeft: 10,
+        justifyContent: 'center',
     },
-    content: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-    },
-    title1: {
+    movieTitle: {
+        fontFamily: 'Times New Roman',
+        fontSize: 20,
+        fontWeight: 'bold',
         color: '#fff',
-        fontSize: 17,
-        fontWeight: '500',
+        marginBottom: 15,
     },
-    text: {
+    infoRow: {
+        flexDirection: 'row',
+        marginBottom: 2,
+    },
+    infoLabel: {
+        fontFamily: 'Times New Roman',
+        fontWeight: 'bold',
+        color: '#fff',
+        width: 80,
+        fontSize: 12,
+    },
+    infoText: {
+        fontFamily: 'Times New Roman',
         color: '#b2b2b2',
-        fontSize: 15,
+        flex: 1,
+        fontSize: 12,
     },
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        justifyContent: 'center',
-        alignItems: 'center',
     },
     scrollViewContent: {
         flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        paddingBottom: 20,
     },
     innerContainer: {
         alignItems: 'center',
-        paddingHorizontal: 10,
+        padding: 10,
     },
     title: {
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
         color: '#333',
-        marginTop: 30,
     },
     screenContainer: {
         marginBottom: 10,
@@ -476,7 +468,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     screenEffect: {
-        width: 300,
+        width: '80%',
         height: 8,
         backgroundColor: '#1b293a',
         borderTopLeftRadius: 50,
@@ -486,6 +478,7 @@ const styles = StyleSheet.create({
     seatGrid: {
         flexDirection: 'column',
         alignItems: 'center',
+        width: '100%',
     },
     rowContainer: {
         flexDirection: 'row',
@@ -493,18 +486,18 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     rowLabel: {
-        width: 25,
-        height: 25,
-        borderRadius: 12.5,
+        width: screenWidth * 0.06,
+        height: screenWidth * 0.06,
+        borderRadius: screenWidth * 0.03,
         backgroundColor: '#000',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 5,
-        marginLeft: 5,
+        marginHorizontal: 5,
     },
     rowLabelText: {
         color: '#fff',
         fontWeight: 'bold',
+        fontSize: screenWidth * 0.03,
     },
     seat: {
         justifyContent: 'center',
@@ -512,6 +505,42 @@ const styles = StyleSheet.create({
         margin: 2,
         borderRadius: 4,
         borderWidth: 1,
+        width: screenWidth * 0.06,
+        height: screenWidth * 0.06,
+    },
+    seatText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: screenWidth * 0.025,
+    },
+    instructionText: {
+        fontSize: 14,
+        textAlign: 'center',
+        marginVertical: 10,
+        color: '#333',
+        lineHeight: 20,
+        fontWeight: 'bold',
+    },
+    legendContainer: {
+        flexDirection: 'column',
+        justifyContent: 'center',
+        marginTop: 10,
+    },
+    legendItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginVertical: 5,
+    },
+    legendBox: {
+        width: screenWidth * 0.06,
+        height: screenWidth * 0.06,
+        borderRadius: 4,
+        marginRight: 8,
+        borderWidth: 1,
+    },
+    legendText: {
+        fontSize: 14,
+        fontWeight: 'bold',
     },
     freeSeat: {
         backgroundColor: '#1b293a',
@@ -524,10 +553,6 @@ const styles = StyleSheet.create({
     selectedSeat: {
         backgroundColor: '#FFEB3B',
         borderColor: '#FBC02D',
-    },
-    seatText: {
-        color: '#fff',
-        fontWeight: 'bold',
     },
     selectedSeatsContainer: {
         marginTop: 10,
@@ -543,66 +568,41 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 5,
     },
-    confirmButton: {
-        backgroundColor: '#1b293a',
-        padding: 10,
-        borderRadius: 5,
-        alignItems: 'center',
-        marginTop: 15,
-        marginBottom: 15,
-    },
-    confirmButtonText: {
-        color: '#fff',
-        fontWeight: 'bold',
-    },
-    instructionText: {
-        fontSize: 14,
-        textAlign: 'center',
-        marginVertical: 10,
-        color: '#333',
-        lineHeight: 20,
-        fontWeight: 'bold',
-    },
-    legendContainer: {
-        flexDirection: 'column', // Stacked legends vertically
-        justifyContent: 'center',
-        marginTop: 10,
-    },
-    legendItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginVertical: 5,  // Spacing between each legend item
-    },
-    legendBox: {
-        width: 25,
-        height: 25,
-        borderRadius: 4,
-        marginRight: 8,
-        borderWidth: 1,
-    },
-    legendText: {
-        fontSize: 14,
-        fontWeight: 'bold',
-    },
     ticketSelectionContainer: {
         marginTop: 20,
-        alignItems: 'center',
+        width: '100%',
     },
     ticketType: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 10,
-        width: '100%',
     },
     ticketCounter: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
     },
     boldText: {
         fontWeight: 'bold',
         color: '#000',
+    },
+    totalCostContainer: {
+        width: '100%',
+        alignItems: 'center',
+        marginVertical: 10,
+    },
+    confirmButton: {
+        backgroundColor: '#1b293a',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 15,
+        width: '80%',
+    },
+    confirmButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
     modalOverlay: {
         flex: 1,
@@ -612,10 +612,19 @@ const styles = StyleSheet.create({
     },
     modalContainer: {
         width: '90%',
-        maxHeight: '90%',
+        maxHeight: '80%',
         backgroundColor: '#fff',
         borderRadius: 10,
         padding: 20,
+    },
+    modalContent: {
+        flexGrow: 1,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 20,
+        textAlign: 'center',
     },
     input: {
         height: 40,
@@ -632,5 +641,42 @@ const styles = StyleSheet.create({
     smallInput: {
         flex: 1,
         marginHorizontal: 5,
-    }
+    },
+    payButton: {
+        backgroundColor: '#1b293a',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    payButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    cancelButton: {
+        backgroundColor: '#888',
+        padding: 10,
+        borderRadius: 5,
+        alignItems: 'center',
+        marginTop: 10,
+    },
+    cancelButtonText: {
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+    counterButton: {
+        backgroundColor: '#1b293a',
+        width: screenWidth * 0.08,
+        height: screenWidth * 0.08,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: screenWidth * 0.04,
+    },
+    counterButtonText: {
+        color: '#fff',
+        fontSize: screenWidth * 0.04,
+        fontWeight: 'bold',
+    },
 });
