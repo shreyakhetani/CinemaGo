@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Image, StyleSheet, Platform, View, ScrollView, Text, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, View, ScrollView, Text, TouchableOpacity } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import Footer from '../../components/footer';
 import axios from 'axios';
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
 
 const images: { [key: string]: any } = {
   'Joker': require('../../assets/images/Joker.jpeg'),
@@ -13,9 +15,8 @@ const images: { [key: string]: any } = {
 };
 
 const getImageSource = (imageName: string): any => {
-  // Remove the file extension from the imageName if it exists
-  const baseName = imageName.split('.')[0];
-  
+  const baseName = imageName.split('.')[0]; // Remove file extension
+
   if (images[baseName]) {
     return images[baseName];
   } else {
@@ -43,8 +44,6 @@ export interface Movie {
   description1: string;
 }
 
-const API_BASE_URL = 'http://192.168.32.196:5000';
-
 const getTodayDate = () => {
   const today = new Date();
   const year = today.getFullYear();
@@ -61,41 +60,53 @@ export default function HomeScreen() {
 
   useEffect(() => {
     const fetchMovies = async () => {
-        try {
-            const response = await axios.get(`${API_BASE_URL}/api/movies/movies`);
-            console.log('API Response:', response.data);
-            setMovies(response.data.movies);  // Set only the movies array to state
-        } catch (error) {
-            console.error('Error fetching movies:', error);
-        } finally {
-            setLoading(false);
-        }
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/movies/movies`);
+        console.log('API Response:', response.data);
+        setMovies(response.data.movies);
+      } catch (error) {
+        console.error('Error fetching movies:', error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchMovies();
-}, []);
-
+  }, []);
 
   const handleMoviePress = (movieId: string) => {
     router.push({
       pathname: '/MovieDetail',
-      params: { id: movieId }
+      params: { id: movieId },
     });
   };
 
   return (
     <ScrollView>
+      {/* Header for CinemaGo */}
+      <View style={styles.header}>
+        <Image
+          source={require('../../assets/images/CinemaGo10.jpg')}
+          style={styles.headerImage}
+          resizeMode="contain"
+        />
+        <Text style={styles.headerText}>
+          After his home is conquered by the tyrannical emperors who now lead Rome, Lucius is forced to enter the Colosseum and must look to his past to find strength to return the glory of Rome to its people
+        </Text>
+        <Text style={styles.headerText2}>
+        Gladiator II Release Day: 15th October
+        </Text>
+      </View>
+
       <View style={styles.container}>
         {movies.map((movie) => (
           <View key={movie._id} style={styles.movieContainer}>
-            <View>
+            <View style={styles.contentRow}>
               <Image
                 source={getImageSource(movie.imageName)}
                 style={styles.image}
-                resizeMode="cover"
+                resizeMode="contain"
               />
-            </View>
-            <View style={styles.content}>
-              <View>
+              <View style={styles.content}>
                 <Text style={styles.title}>{movie.name}</Text>
                 <Text style={styles.day}>{todayDate}</Text>
                 <View style={styles.iconContainer}>
@@ -137,7 +148,7 @@ export default function HomeScreen() {
               style={styles.button}
               onPress={() => handleMoviePress(movie._id)}
             >
-              <Text style={styles.buttonText}>Explore and buy</Text>
+              <Text style={styles.buttonText}>Explore and Buy</Text>
             </TouchableOpacity>
           </View>
         ))}
@@ -148,81 +159,137 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:{
-    flexGrow: 1,
-    justifyContent: 'center',  
-    alignItems: 'center',
-  },
-  movieContainer:{
-    backgroundColor:'#fff',
-    width: '89%',
+  header: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 30,
   },
-  content: {
-    width:'100%',
+  headerImage: {
+    width: '100%', // Full width for a larger header image
+    height: 600, // Increased height for prominence
+    marginTop: 30, // Space above the text
+  },
+  headerText: {
+    fontFamily: 'Times New Roman',
+    fontSize: 16, // Adjust font size for readability
+    fontWeight: '400', // Normal weight for the text
+    marginBottom: 15, 
+    color: '#fff', // Color of the text
+    paddingHorizontal: 20, // Horizontal padding for better layout
+    textAlign: 'center', // Center align the text
+  },
+  headerText2: {
+    fontFamily: 'Times New Roman',
+    fontSize: 20, // Adjust font size for readability
+    fontWeight: '500', // Normal weight for the text
+    color: '#fff', // Color of the text
+    marginTop: 15, // Space above the text
+    marginBottom: 20, 
+    paddingHorizontal: 20, // Horizontal padding for better layout
+    textAlign: 'center', // Center align the text
+  },
+  container: {
+    flexGrow: 1,
+    paddingVertical: 20,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    backgroundColor: '#000', // Keep background for the rest of the app
+  },
+  movieContainer: {
+    backgroundColor: '#fff',
+    marginVertical: 10,
+    borderRadius: 10,
+    overflow: 'hidden',
+    width: '95%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    padding: 15,
+  },
+  contentRow: {
     flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#898a8c',
-    marginBottom: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
-    width: 350,
-    height: 300
+    width: 120,
+    height: 180,
+    resizeMode: 'contain',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
   },
-  button: {
-    padding: 10,
+  content: {
+    flex: 1,
+    paddingLeft: 15,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor:'#163d71',
-    borderRadius: 5,
-    marginBottom: 10,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 20,  
+  title: {
+    fontFamily: 'Times New Roman',
+    fontSize: 22,
     fontWeight: 'bold',
-  },
-  title :{
-    fontSize: 25,
-    fontWeight: '700',
-    color: '#163d71',
-    marginBottom: 10,
+    color: '#1c3d72',
+    marginBottom: 6,
+    textAlign: 'center',
   },
   day: {
-    fontSize: 22,
-    color:'#1b293a',
-    marginBottom: 10,
+    fontFamily: 'Times New Roman',
+    fontSize: 16,
+    color: '#6b7b8a',
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  iconContainer:{
+  iconContainer: {
     flexDirection: 'row',
-    marginBottom: 10,
-  },
-  subtitle:{
-    flexDirection: 'row',
-    backgroundColor:'#dfe3eb',
-    padding: 10,
-    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 12,
+  },
+  subtitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef3f8',
+    padding: 6,
+    borderRadius: 8,
     marginRight: 10,
-    gap: 10
   },
-  lang:{
+  subtitleText: {
+    marginLeft: 5,
+    fontSize: 14,
+    color: '#1c3d72',
+  },
+  lang: {
     flexDirection: 'row',
-    backgroundColor:'#dfe3eb',
-    padding: 10,
-    borderRadius: 20,
     alignItems: 'center',
-    gap:5
+    backgroundColor: '#eef3f8',
+    padding: 6,
+    borderRadius: 8,
+    marginRight: 10,
   },
-  age:{
-    fontSize: 25,
+  age: {
+    fontSize: 14,
     fontWeight: '600',
-    color:'#fff',
+    color: '#fff',
     backgroundColor: '#1b293a',
-    borderRadius: 10,
-    width:30,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
     marginLeft: 10,
-    paddingTop: 3
-  }
+  },
+  button: {
+    backgroundColor: '#163d71',
+    paddingVertical: 15,
+    paddingHorizontal: 94,
+    borderRadius: 8,
+    marginTop: 20,
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  buttonText: {
+    fontFamily: 'Times New Roman',
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });

@@ -80,6 +80,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   title:{
+    fontFamily: 'Times New Roman',
     fontSize: 17,
     color: '#fff',
     marginBottom: 7,
@@ -87,6 +88,7 @@ const styles = StyleSheet.create({
   },
 
   phone:{
+    fontFamily: 'Times New Roman',
     fontSize: 17,
     color: '#fff',
     marginBottom: 7,
@@ -94,6 +96,7 @@ const styles = StyleSheet.create({
   },
   
   text:{
+    fontFamily: 'Times New Roman',
     fontSize: 15,
     color: '#fff',
     marginBottom: 7

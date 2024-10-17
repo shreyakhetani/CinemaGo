@@ -144,11 +144,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#1b293a',
   },
   container: {
+    marginTop: 50,
     padding: 20,
   },
   image: {
     width: '100%',
-    height: 300,
+    height: 520,
     resizeMode: 'cover',
     marginBottom: 20,
   },
@@ -156,26 +157,31 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   movieTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 10,
+    fontFamily: 'Times New Roman',
   },
   infoRow: {
     flexDirection: 'row',
     marginBottom: 5,
+    
   },
   infoLabel: {
+    fontFamily: 'Times New Roman',
     fontWeight: 'bold',
     color: '#fff',
     width: 100,
   },
   infoText: {
+    fontFamily: 'Times New Roman',
     color: '#b2b2b2',
     flex: 1,
   },
   showtimesTitle: {
-    fontSize: 20,
+    fontFamily: 'Times New Roman',
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 10,
