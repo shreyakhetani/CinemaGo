@@ -9,7 +9,6 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://192.168.32.196:5000';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const showId = '670e6be4114b5a5db1e84521';
 
 // Keep the original images object
 const images: { [key: string]: any } = {
@@ -42,10 +41,23 @@ export default function SeatSelectionScreen() {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
     const [movie, setMovie] = useState<any>(null);
+    const [showtime, setShowtime] = useState<string>('');
+    const [hallId, setHallId] = useState<string>('');
     const params = useLocalSearchParams();
     const movieId = params.movieId as string;
+    const showtimeParam = params.showtime as string;
+    const hallIdParam = params.hallId as string;
     const router = useRouter();
 
+
+    useEffect(() => {
+        if (showtimeParam && hallIdParam) {
+            setShowtime(showtimeParam);
+            setHallId(hallIdParam);
+            console.log('Params received:', { movieId, showtime: showtimeParam, hallId: hallIdParam });
+        }
+    }, [showtimeParam, hallIdParam, movieId]);
+    
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
@@ -55,23 +67,18 @@ export default function SeatSelectionScreen() {
                 console.error('Error fetching movie details:', error);
             }
         };
-
+    
         if (movieId) {
             fetchMovieDetails();
         }
     }, [movieId]);
-
+    
     useEffect(() => {
-        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
-            .then((response) => {
-                setSeats(response.data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error('Error fetching seat data:', error);
-                setLoading(false);
-            });
-    }, []);
+        if (hallId && showtime) {
+            fetchSeatsData();
+        }
+    }, [hallId, showtime]);
+
 
     const handleSeatSelect = (rowIndex: number, colIndex: number) => {
         const newSelected = { row: rowIndex, col: colIndex };
@@ -87,6 +94,7 @@ export default function SeatSelectionScreen() {
         }
     };
 
+
     const adjustTicketCounts = (maxSeats: number) => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
         if (totalTickets > maxSeats) {
@@ -97,11 +105,42 @@ export default function SeatSelectionScreen() {
         }
     };
 
+
     const fetchSeatsData = () => {
         setLoading(true);
-        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
-            .then((response) => {
-                setSeats(response.data);
+        axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}/showtimes`)
+            .then(async (response) => {
+                console.log('API Response:', JSON.stringify(response.data, null, 2));
+                
+                if (Array.isArray(response.data)) {
+                    const foundShowtime = response.data.find(show => 
+                        show.hallId._id === hallId && 
+                        new Date(show.showtime).toISOString() === new Date(showtime).toISOString()
+                    );
+                    
+                    if (foundShowtime) {
+                        console.log('Found matching showtime:', foundShowtime);
+                        
+                        // If seats are not included in the response, fetch them separately
+                        if (!foundShowtime.hallId.seats) {
+                            try {
+                                const seatsResponse = await axios.get(`${API_BASE_URL}/api/movies/showtimes/${foundShowtime._id}/seats`);
+                                setSeats(seatsResponse.data);
+                            } catch (error) {
+                                console.error('Error fetching seats:', error);
+                                setSeats([]);
+                            }
+                        } else {
+                            setSeats(foundShowtime.hallId.seats);
+                        }
+                    } else {
+                        console.log('No matching showtime found');
+                        setSeats([]);
+                    }
+                } else {
+                    console.error('Unexpected response structure:', response.data);
+                    setSeats([]);
+                }
                 setLoading(false);
             })
             .catch((error) => {
@@ -109,6 +148,16 @@ export default function SeatSelectionScreen() {
                 setLoading(false);
             });
     };
+    
+    useEffect(() => {
+        if (movieId && hallId && showtime) {
+            console.log('Fetching seats with:', { movieId, hallId, showtime });
+            fetchSeatsData();
+        } else {
+            console.log('Missing data for fetching seats:', { movieId, hallId, showtime });
+        }
+    }, [movieId, hallId, showtime]);
+
 
     const handleConfirmBooking = () => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
@@ -126,6 +175,7 @@ export default function SeatSelectionScreen() {
         setIsPaymentModalVisible(true); 
     };
 
+
     const handleCancelPayment = () => {
         setIsPaymentModalVisible(false);
         setSelectedSeats([]);
@@ -136,26 +186,34 @@ export default function SeatSelectionScreen() {
         fetchSeatsData(); 
     };           
 
+
     const handlePayPress = async () => {
         if (!name || !cardNumber || !expiryDate || !cvv) {
             Alert.alert('Error', 'Please enter all payment details.');
             return;
         }
-
+    
         try {
             const response = await axios.post(`${API_BASE_URL}/api/movies/book-seats`, {
-                showId,
+                movieId,
+                hallId,
+                showtime,
                 seats: selectedSeats,
             });
-
+    
             if (response.status === 201) {
                 Alert.alert('Payment Successful', 'Your payment was processed successfully.');
                 setIsPaymentModalVisible(false);
                 fetchSeatsData();
-
+    
                 router.push({
                     pathname: '/(tabs)/TicketConfirmation',
-                    params: { selectedSeats: JSON.stringify(selectedSeats) },
+                    params: { 
+                        selectedSeats: JSON.stringify(selectedSeats),
+                        movieId,
+                        hallId,
+                        showtime
+                    },
                 });
             } else {
                 Alert.alert('Booking Error', 'There was an error booking the seats.');
@@ -181,12 +239,13 @@ export default function SeatSelectionScreen() {
 
     return (
         <ScrollView>
-            {/* Keep the original movie detail section */}
             {movie && (
                 <View style={styles.movieDetailContainer}>
                     <Image source={getImageSource(movie.imageName)} style={styles.image} />
                     <View style={styles.detailsContainer}>
                         <Text style={styles.movieTitle}>{movie.name}</Text>
+                        <Text style={styles.infoText}>Hall: {hallId}</Text>
+                        <Text style={styles.infoText}>Showtime: {new Date(showtime).toLocaleString()}</Text>
                         <View style={styles.infoRow}>
                             <Text style={styles.infoLabel}>Movie Story:</Text>
                         </View>
@@ -198,19 +257,17 @@ export default function SeatSelectionScreen() {
                     </View>
                 </View>
             )}
-
+    
             <View style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollViewContent}>
                     <View style={styles.innerContainer}>
                         <Text style={styles.title}>Choose your seats</Text>
-
-                        {/* SCREEN label */}
+    
                         <View style={styles.screenContainer}>
                             <Text style={styles.screenText}>SCREEN</Text>
                             <View style={styles.screenEffect} />
                         </View>
-
-                        {/* Display seat grid */}
+    
                         <View style={styles.seatGrid}>
                             {seats.map((row, rowIndex) => (
                                 <View key={rowIndex} style={styles.rowContainer}>
@@ -221,7 +278,8 @@ export default function SeatSelectionScreen() {
                                         <TouchableOpacity
                                             key={colIndex}
                                             style={[styles.seat, {
-                                                backgroundColor: seat === 'booked' ? '#f44336' : selectedSeats.some(s => s.row === rowIndex && s.col === colIndex) ? '#FFEB3B' : '#1b293a',
+                                                backgroundColor: seat === 'booked' ? '#f44336' : 
+                                                    selectedSeats.some(s => s.row === rowIndex && s.col === colIndex) ? '#FFEB3B' : '#1b293a',
                                             }]}
                                             disabled={seat === 'booked'}
                                             onPress={() => handleSeatSelect(rowIndex, colIndex)}
@@ -235,13 +293,12 @@ export default function SeatSelectionScreen() {
                                 </View>
                             ))}
                         </View>
-
+    
                         <Text style={styles.instructionText}>
                             Choose the seats you want. The reserved places{'\n'}
                             are shown in red and your choices in yellow.
                         </Text>
                         
-                        {/* Legend Section */}
                         <View style={styles.legendContainer}>
                             <View style={styles.legendItem}>
                                 <View style={[styles.legendBox, styles.freeSeat]} />
@@ -256,8 +313,7 @@ export default function SeatSelectionScreen() {
                                 <Text style={styles.legendText}>Reserved seat</Text>
                             </View>
                         </View>
-
-                        {/* Selected Seats Information */}
+    
                         {selectedSeats.length > 0 && (
                             <View style={styles.selectedSeatsContainer}>
                                 <Text style={styles.selectedSeatsTitle}>Selected Seats:</Text>
@@ -266,8 +322,7 @@ export default function SeatSelectionScreen() {
                                 ))}
                             </View>
                         )}
-
-                        {/* Ticket Selection Section */}
+    
                         <View style={styles.ticketSelectionContainer}>
                             <TicketTypeSelector
                                 label="Adult Ticket (€15 each):"
@@ -293,20 +348,17 @@ export default function SeatSelectionScreen() {
                                 onDecrement={() => setStudentTickets(Math.max(0, studentTickets - 1))}
                                 onIncrement={() => setStudentTickets(Math.min(selectedSeats.length - adultTickets - childTickets - pensionerTickets, studentTickets + 1))}
                             />
-
                         </View>
                         <View style={styles.totalCostContainer}>
                             <Text style={styles.boldText}>Total Cost: €{(adultTickets * 15) + (childTickets * 12) + (pensionerTickets * 10) + (studentTickets * 10)}</Text>
                         </View>
-                        {/* Confirm Selection Button */}
                         <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmBooking}>
                             <Text style={styles.confirmButtonText}>Buy Tickets</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </View>
-
-            {/* Payment Modal */}
+    
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -317,7 +369,7 @@ export default function SeatSelectionScreen() {
                     <View style={styles.modalContainer}>
                         <ScrollView contentContainerStyle={styles.modalContent}>
                             <Text style={styles.modalTitle}>Payment Details</Text>
-
+    
                             <TextInput
                                 placeholder="Name"
                                 value={name}
@@ -353,7 +405,7 @@ export default function SeatSelectionScreen() {
                                     maxLength={3}
                                 />
                             </View>
-
+    
                             <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
                                 <Text style={styles.payButtonText}>Pay</Text>
                             </TouchableOpacity>

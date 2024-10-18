@@ -8,6 +8,57 @@ const Movies = require('../models/MoviesSchema')
 const { validateMovieId } = require('../middleware/validation');
 
 
+// Assign a movie to a cinema hall
+router.post('/assign-movie-to-hall', async (req, res) => {
+    const { hallName, movieId } = req.body;
+
+    try {
+        // Find the hall by name
+        const hall = await CinemaHall.findOne({ name: hallName });
+        if (!hall) {
+            return res.status(404).json({ message: 'Cinema Hall not found' });
+        }
+
+        // Assign the movieId to the hall
+        hall.movieId = movieId;
+        await hall.save();
+
+        res.status(200).json({ message: 'Movie assigned to hall successfully', hall });
+    } catch (err) {
+        console.error('Error assigning movie to hall:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Route to create a movie show
+router.post('/create-movie-show', async (req, res) => {
+    const { movieId, hallId, showtime } = req.body;
+
+    try {
+        // Check if the movie and hall exist
+        const movie = await Movies.findById(movieId);
+        const hall = await CinemaHall.findById(hallId);
+
+        if (!movie || !hall) {
+            return res.status(404).json({ message: 'Movie or Cinema Hall not found' });
+        }
+
+        // Create the new movie show
+        const movieShow = new MovieShow({
+            movieId,     // Link to the Movies collection
+            hallId,      // Link to the CinemaHall collection
+            showtime: new Date(showtime) // Use the user-provided showtime
+        });
+
+        await movieShow.save();
+        res.status(201).json({ message: 'Movie Show created successfully', movieShow });
+    } catch (err) {
+        console.error('Error creating movie show:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+
 // Get available seats for a showtime
 router.get('/showtimes/:id/seats', async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -147,23 +198,37 @@ router.get('/movies', async (req, res) => {
         }
     });
 
-    // Get showtimes for a specific movie
+    // Get showtimes for a specific movie by movieId
     router.get('/movies/:id/showtimes', validateMovieId, async (req, res) => {
         try {
-        const movie = await Movies.findById(req.params.id).select('name time').lean();
-        
-        if (!movie) {
-            return res.status(404).json({ message: 'Movie not found' });
-        }
-
-        // Assuming 'time' is the field that stores showtimes
-        const showtimes = movie.time || [];
-
-        res.json({ movieId: movie._id, movieName: movie.name, showtimes });
+            // Find all movie shows that are associated with the specified movieId
+            const movieShows = await MovieShow.find({ movieId: req.params.id })
+                                            .populate('hallId', 'name seats')  // Populate hallId to get hall name and seats
+                                            .select('showtime hallId')
+                                            .lean();  // Return plain JavaScript objects
+    
+            if (movieShows.length === 0) {
+                return res.status(404).json({ message: 'No showtimes found for this movie' });
+            }
+    
+            // Transform the data to include only necessary information
+            const transformedShows = movieShows.map(show => ({
+                _id: show._id,
+                showtime: show.showtime,
+                hallId: {
+                    _id: show.hallId._id,
+                    name: show.hallId.name,
+                    seats: show.hallId.seats
+                }
+            }));
+    
+            // Respond with the list of showtimes, including hall name, showtime, and seats
+            res.json(transformedShows);
         } catch (error) {
-        console.error('Error fetching movie showtimes:', error);
-        res.status(500).json({ error: 'Failed to fetch movie showtimes' });
+            console.error('Error fetching movie showtimes:', error);
+            res.status(500).json({ error: 'Failed to fetch movie showtimes' });
         }
     });
+
 
 module.exports = router;

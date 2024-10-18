@@ -35,27 +35,38 @@ export default function MovieDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [showtimes, setShowtimes] = useState<any[]>([]);
+  
   useEffect(() => {
-    const fetchMovieDetails = async () => {
+    const fetchMovieDetailsAndShowtimes = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
-        console.log('API Response:', JSON.stringify(response.data, null, 2)); // Debug log
-        setMovie(response.data);
+        const [movieResponse, showtimesResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`),
+          axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}/showtimes`)
+        ]);
+        
+        setMovie(movieResponse.data);
+        setShowtimes(showtimesResponse.data);
       } catch (error) {
-        console.error('Error fetching movie details:', error);
-        setError('Failed to load movie details. Please try again.');
+        console.error('Error fetching movie details and showtimes:', error);
+        setError('Failed to load movie details and showtimes. Please try again.');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchMovieDetails();
+  
+    fetchMovieDetailsAndShowtimes();
   }, [movieId]);
 
-  const handleShowtimeSelect = (showtime: string) => {
+
+  const handleShowtimeSelect = (showtime: string, hallId: string) => {
     router.push({
       pathname: '/seatSelection',
-      params: { movieId, showtime }
+      params: { 
+        movieId, 
+        showtime: new Date(showtime).toISOString(), // Ensure consistent date format
+        hallId 
+      }
     });
   };
 
@@ -94,17 +105,17 @@ export default function MovieDetail() {
         </View>
 
         <Text style={styles.showtimesTitle}>Select Showtime:</Text>
-        {movie.time.map((showtime: string, index: number) => (
+        {showtimes.map((showtime, index) => (
           <TouchableOpacity 
             key={index} 
             style={styles.ticketContainer}
-            onPress={() => handleShowtimeSelect(showtime)}
+            onPress={() => handleShowtimeSelect(showtime.showtime, showtime.hallId._id)}
           >
             <View style={styles.ticketdetails}>
-              <Text style={styles.time}>{showtime}</Text>
+              <Text style={styles.time}>{new Date(showtime.showtime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
               <View style={styles.dateContent}>
-                <Text style={styles.date}>{new Date().toDateString()}</Text>
-                <Text style={styles.hall}>{`CinemaGo, ${movie.halls}`}</Text>
+                <Text style={styles.date}>{new Date(showtime.showtime).toDateString()}</Text>
+                <Text style={styles.hall}>{`CinemaGo, ${showtime.hallId.name}`}</Text>
               </View>
             </View>
             <View style={styles.vacacyContainer}>
