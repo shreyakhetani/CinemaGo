@@ -31,8 +31,6 @@ export interface Movie {
   premiere: string;
   distributor: string;
   roles: string[];
-  halls: string;
-  time: string[];
   language: string;
   cc: string;
   age: number;
@@ -41,7 +39,6 @@ export interface Movie {
   director: string;
   genre: string;
   description: string;
-  description1: string;
 }
 
 const getTodayDate = () => {

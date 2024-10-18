@@ -9,9 +9,7 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://192.168.32.196:5000';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const showId = '670e6be4114b5a5db1e84521';
 
-// Keep the original images object
 const images: { [key: string]: any } = {
     'Joker': require('../../assets/images/Joker.jpeg'),
     'WildRobot': require('../../assets/images/WildRobot.png'),
@@ -28,6 +26,17 @@ type SeatStatus = 'free' | 'booked' | 'selected';
 type Seats = SeatStatus[][];
 type SelectedSeat = { row: number; col: number };
 
+type ShowtimeData = {
+    _id: string;
+    showtime: string;
+    hallId: {
+        _id: string;
+        name: string;
+        seats?: Seats;
+    };
+    availableSeats: number;
+};
+
 export default function SeatSelectionScreen() {
     const [seats, setSeats] = useState<Seats>([]);
     const [loading, setLoading] = useState(true);
@@ -42,10 +51,30 @@ export default function SeatSelectionScreen() {
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
     const [movie, setMovie] = useState<any>(null);
+    const [showtime, setShowtime] = useState<string>('');
+    const [hallId, setHallId] = useState<string>('');
+    const [hallName, setHallName] = useState<string>('');
     const params = useLocalSearchParams();
     const movieId = params.movieId as string;
+    const showtimeParam = params.showtime as string;
+    const hallIdParam = params.hallId as string;
     const router = useRouter();
 
+    useEffect(() => {
+        if (showtimeParam && hallIdParam) {
+            setShowtime(showtimeParam);
+            setHallId(hallIdParam);
+            console.log('Params received:', { movieId, showtime: showtimeParam, hallId: hallIdParam });
+        }
+    }, [showtimeParam, hallIdParam, movieId]);
+
+    useEffect(() => {
+        if (hallId && showtime) {
+            fetchSeatsData();
+        }
+    }, [hallId, showtime]);
+
+    
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
@@ -55,23 +84,17 @@ export default function SeatSelectionScreen() {
                 console.error('Error fetching movie details:', error);
             }
         };
-
+    
         if (movieId) {
             fetchMovieDetails();
         }
     }, [movieId]);
-
+    
     useEffect(() => {
-        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
-            .then((response) => {
-                setSeats(response.data);
-                setLoading(false);
-            })
-            .catch((error) => {
-                console.error('Error fetching seat data:', error);
-                setLoading(false);
-            });
-    }, []);
+        if (hallId && showtime) {
+            fetchSeatsData();
+        }
+    }, [hallId, showtime]);
 
     const handleSeatSelect = (rowIndex: number, colIndex: number) => {
         const newSelected = { row: rowIndex, col: colIndex };
@@ -99,15 +122,46 @@ export default function SeatSelectionScreen() {
 
     const fetchSeatsData = () => {
         setLoading(true);
-        axios.get(`${API_BASE_URL}/api/movies/showtimes/${showId}/seats`)
+        console.log(`Fetching seats for movie: ${movieId}, hall: ${hallId}, showtime: ${showtime}`);
+        axios.get<ShowtimeData[]>(`${API_BASE_URL}/api/movies/movies/${movieId}/showtimes`)
             .then((response) => {
-                setSeats(response.data);
+                console.log('API Response:', JSON.stringify(response.data, null, 2));
+                
+                const foundShowtime = response.data.find(item => 
+                    item.hallId._id === hallId && 
+                    new Date(item.showtime).toISOString() === new Date(showtime).toISOString()
+                );
+                
+                if (foundShowtime) {
+                    console.log('Found matching showtime:', JSON.stringify(foundShowtime, null, 2));
+                    setHallName(foundShowtime.hallId.name);
+                    
+                    if (foundShowtime.hallId.seats && Array.isArray(foundShowtime.hallId.seats)) {
+                        console.log('Setting seats:', foundShowtime.hallId.seats);
+                        setSeats(foundShowtime.hallId.seats);
+                    } else {
+                        console.error('Seats data is not available or not an array');
+                        // Generate default seats only if no seat data exists
+                        const defaultSeats = generateDefaultSeats(10, 10);
+                        setSeats(defaultSeats);
+                    }
+                } else {
+                    console.log('No matching showtime found');
+                    setSeats([]);
+                }
                 setLoading(false);
             })
             .catch((error) => {
                 console.error('Error fetching seat data:', error);
                 setLoading(false);
             });
+    };
+    
+    // Helper function to generate a default seat layout
+    const generateDefaultSeats = (rows: number, seatsPerRow: number): SeatStatus[][] => {
+        return Array(rows).fill(null).map(() => 
+            Array(seatsPerRow).fill('free' as SeatStatus)
+        );
     };
 
     const handleConfirmBooking = () => {
@@ -141,28 +195,70 @@ export default function SeatSelectionScreen() {
             Alert.alert('Error', 'Please enter all payment details.');
             return;
         }
-
+    
         try {
+            const showtimesResponse = await axios.get<ShowtimeData[]>(`${API_BASE_URL}/api/movies/movies/${movieId}/showtimes`);
+            const foundShowtime = showtimesResponse.data.find(item => 
+                item.hallId._id === hallId && 
+                new Date(item.showtime).toISOString() === new Date(showtime).toISOString()
+            );
+    
+            if (!foundShowtime) {
+                Alert.alert('Error', 'Could not find the selected showtime.');
+                return;
+            }
+    
             const response = await axios.post(`${API_BASE_URL}/api/movies/book-seats`, {
-                showId,
+                showId: foundShowtime._id,
                 seats: selectedSeats,
             });
-
+    
             if (response.status === 201) {
-                Alert.alert('Payment Successful', 'Your payment was processed successfully.');
+                // Immediately update local state to mark selected seats as booked
+                setSeats(prevSeats => {
+                    const newSeats = prevSeats.map((row, rowIndex) => 
+                        row.map((seat, colIndex) => {
+                            if (selectedSeats.some(s => s.row === rowIndex && s.col === colIndex)) {
+                                return 'booked';
+                            }
+                            return seat;
+                        })
+                    );
+                    return newSeats;
+                });
+    
+                Alert.alert('Booking Successful', 'Your seats have been booked successfully.');
                 setIsPaymentModalVisible(false);
-                fetchSeatsData();
-
+    
+                // Reset selection states
+                setSelectedSeats([]);
+                setAdultTickets(0);
+                setChildTickets(0);
+                setPensionerTickets(0);
+                setStudentTickets(0);
+    
+                // Fetch fresh seat data after a short delay to ensure backend is updated
+                setTimeout(() => {
+                    fetchSeatsData();
+                }, 1000);
+    
                 router.push({
                     pathname: '/(tabs)/TicketConfirmation',
-                    params: { selectedSeats: JSON.stringify(selectedSeats) },
+                    params: { 
+                        selectedSeats: JSON.stringify(selectedSeats),
+                        movieId,
+                        hallId,
+                        showtime: foundShowtime.showtime,
+                        movieName: movie.name,
+                        hallName: foundShowtime.hallId.name
+                    },
                 });
             } else {
                 Alert.alert('Booking Error', 'There was an error booking the seats.');
             }
         } catch (error) {
             console.error('Error booking seats:', error);
-            Alert.alert('Payment Failed', 'The payment could not be processed.');
+            Alert.alert('Booking Failed', 'The seats could not be booked. Please try again.');
         }
     };
 
@@ -178,10 +274,8 @@ export default function SeatSelectionScreen() {
         return text.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
     };
 
-
     return (
         <ScrollView>
-            {/* Keep the original movie detail section */}
             {movie && (
                 <View style={styles.movieDetailContainer}>
                     <Image source={getImageSource(movie.imageName)} style={styles.image} />
@@ -198,50 +292,72 @@ export default function SeatSelectionScreen() {
                     </View>
                 </View>
             )}
-
+    
             <View style={styles.container}>
                 <ScrollView contentContainerStyle={styles.scrollViewContent}>
                     <View style={styles.innerContainer}>
+                        <View style={styles.showInfoContainer}>
+                            <Text style={styles.hallName}>
+                                {hallName || 'Hall information not available'}
+                            </Text>
+                            <Text style={styles.dateTime}>
+                                {new Date(showtime).toLocaleDateString('en-US', { 
+                                    weekday: 'long', 
+                                    year: 'numeric', 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                })}
+                            </Text>
+                            <Text style={styles.dateTime}>
+                                {"Show Time: "}
+                                {new Date(showtime).toLocaleTimeString('en-US', { 
+                                    hour: '2-digit', 
+                                    minute: '2-digit',
+                                    hour12: false
+                                })}
+                            </Text>
+                        </View>
                         <Text style={styles.title}>Choose your seats</Text>
-
-                        {/* SCREEN label */}
                         <View style={styles.screenContainer}>
                             <Text style={styles.screenText}>SCREEN</Text>
                             <View style={styles.screenEffect} />
                         </View>
-
-                        {/* Display seat grid */}
+    
                         <View style={styles.seatGrid}>
-                            {seats.map((row, rowIndex) => (
-                                <View key={rowIndex} style={styles.rowContainer}>
-                                    <View style={styles.rowLabel}>
-                                        <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
+                            {seats.length > 0 ? (
+                                seats.map((row, rowIndex) => (
+                                    <View key={rowIndex} style={styles.rowContainer}>
+                                        <View style={styles.rowLabel}>
+                                            <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
+                                        </View>
+                                        {row.map((seat, colIndex) => (
+                                            <TouchableOpacity
+                                                key={colIndex}
+                                                style={[styles.seat, {
+                                                    backgroundColor: seat === 'booked' ? '#f44336' : 
+                                                        selectedSeats.some(s => s.row === rowIndex && s.col === colIndex) ? '#FFEB3B' : '#1b293a',
+                                                }]}
+                                                disabled={seat === 'booked'}
+                                                onPress={() => handleSeatSelect(rowIndex, colIndex)}
+                                            >
+                                                <Text style={styles.seatText}>{colIndex + 1}</Text>
+                                            </TouchableOpacity>
+                                        ))}
+                                        <View style={styles.rowLabel}>
+                                            <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
+                                        </View>
                                     </View>
-                                    {row.map((seat, colIndex) => (
-                                        <TouchableOpacity
-                                            key={colIndex}
-                                            style={[styles.seat, {
-                                                backgroundColor: seat === 'booked' ? '#f44336' : selectedSeats.some(s => s.row === rowIndex && s.col === colIndex) ? '#FFEB3B' : '#1b293a',
-                                            }]}
-                                            disabled={seat === 'booked'}
-                                            onPress={() => handleSeatSelect(rowIndex, colIndex)}
-                                        >
-                                            <Text style={styles.seatText}>{colIndex + 1}</Text>
-                                        </TouchableOpacity>
-                                    ))}
-                                    <View style={styles.rowLabel}>
-                                        <Text style={styles.rowLabelText}>{rowIndex + 1}</Text>
-                                    </View>
-                                </View>
-                            ))}
+                                ))
+                            ) : (
+                                <Text>No seats available for this showtime.</Text>
+                            )}
                         </View>
-
+    
                         <Text style={styles.instructionText}>
                             Choose the seats you want. The reserved places{'\n'}
                             are shown in red and your choices in yellow.
                         </Text>
                         
-                        {/* Legend Section */}
                         <View style={styles.legendContainer}>
                             <View style={styles.legendItem}>
                                 <View style={[styles.legendBox, styles.freeSeat]} />
@@ -256,8 +372,7 @@ export default function SeatSelectionScreen() {
                                 <Text style={styles.legendText}>Reserved seat</Text>
                             </View>
                         </View>
-
-                        {/* Selected Seats Information */}
+    
                         {selectedSeats.length > 0 && (
                             <View style={styles.selectedSeatsContainer}>
                                 <Text style={styles.selectedSeatsTitle}>Selected Seats:</Text>
@@ -266,8 +381,7 @@ export default function SeatSelectionScreen() {
                                 ))}
                             </View>
                         )}
-
-                        {/* Ticket Selection Section */}
+    
                         <View style={styles.ticketSelectionContainer}>
                             <TicketTypeSelector
                                 label="Adult Ticket (€15 each):"
@@ -293,20 +407,17 @@ export default function SeatSelectionScreen() {
                                 onDecrement={() => setStudentTickets(Math.max(0, studentTickets - 1))}
                                 onIncrement={() => setStudentTickets(Math.min(selectedSeats.length - adultTickets - childTickets - pensionerTickets, studentTickets + 1))}
                             />
-
                         </View>
                         <View style={styles.totalCostContainer}>
                             <Text style={styles.boldText}>Total Cost: €{(adultTickets * 15) + (childTickets * 12) + (pensionerTickets * 10) + (studentTickets * 10)}</Text>
                         </View>
-                        {/* Confirm Selection Button */}
                         <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmBooking}>
                             <Text style={styles.confirmButtonText}>Buy Tickets</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
             </View>
-
-            {/* Payment Modal */}
+    
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -317,7 +428,7 @@ export default function SeatSelectionScreen() {
                     <View style={styles.modalContainer}>
                         <ScrollView contentContainerStyle={styles.modalContent}>
                             <Text style={styles.modalTitle}>Payment Details</Text>
-
+    
                             <TextInput
                                 placeholder="Name"
                                 value={name}
@@ -353,7 +464,7 @@ export default function SeatSelectionScreen() {
                                     maxLength={3}
                                 />
                             </View>
-
+    
                             <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
                                 <Text style={styles.payButtonText}>Pay</Text>
                             </TouchableOpacity>
@@ -437,6 +548,29 @@ const styles = StyleSheet.create({
         color: '#b2b2b2',
         flex: 1,
         fontSize: 12,
+    },
+    showInfoContainer: {
+        backgroundColor: '#000',
+        fontFamily: 'Times New Roman',
+        alignItems: 'center',
+        marginBottom: 20,
+        width: '60%',
+        borderRadius: 20,
+    },
+    hallName: {
+        fontFamily: 'Times New Roman',
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 10,
+        marginTop: 10,
+    },
+    dateTime: {
+        fontFamily: 'Times New Roman',
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginBottom: 10,
     },
     container: {
         flex: 1,
