@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
@@ -43,77 +43,98 @@ export default function TicketConfirmationScreen() {
         return <Text>No seats selected</Text>;
     }
 
-    const ticketData = {
-        movieId,
-        hallId,
-        showtime,
-        seats: selectedSeats.map(seat => `Row ${seat.row + 1}, Col ${seat.col + 1}`).join(', '),
-    };
-
     const handleTicketConfirmation = () => {
         Alert.alert('Ticket Confirmed', 'Enjoy your movie!');
     };
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Your Ticket</Text>
-
+        <ScrollView contentContainerStyle={styles.container}>
+            <Text style={styles.title}>Your Tickets</Text>
             <View style={styles.infoContainer}>
                 <Text style={styles.infoText}>Movie: {movieName}</Text>
                 <Text style={styles.infoText}>Hall: {hallName}</Text>
                 <Text style={styles.infoText}>Showtime: {new Date(showtime).toLocaleString()}</Text>
                 <Text style={styles.infoText}>Duration: {movieDetails?.duration}</Text>
                 <Text style={styles.infoText}>Language: {movieDetails?.language}</Text>
-                <Text style={styles.infoText}>Seats:</Text>
-                {selectedSeats.map((seat, index) => (
-                    <Text key={index} style={styles.seatText}>
-                        Row {seat.row + 1}, Col {seat.col + 1}
-                    </Text>
-                ))}
             </View>
 
-            <View style={styles.qrCodeContainer}>
-                <QRCode
-                    value={JSON.stringify(ticketData)}
-                    size={200}
-                    color="#000"
-                    backgroundColor="#fff"
-                />
-            </View>
+            {selectedSeats.map((seat, index) => (
+                <View key={index} style={styles.ticketDetailContainer}>
+                    <Text style={styles.seatText}>Seat: Row {seat.row + 1}, Col {seat.col + 1}</Text>
+                    <View style={styles.qrCodeContainer}>
+                        <QRCode
+                            value={JSON.stringify({
+                                movieId,
+                                hallId,
+                                showtime,
+                                seat: `Row ${seat.row + 1}, Col ${seat.col + 1}`
+                            })}
+                            size={150}
+                            color="#000"
+                            backgroundColor="#fff"
+                        />
+                    </View>
+                </View>
+            ))}
 
-            <Button title="Confirm Ticket" onPress={handleTicketConfirmation} />
-        </View>
+            <Button title="Confirm All Tickets" onPress={handleTicketConfirmation} />
+        </ScrollView>
     );
 }
 
-
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
+        flexGrow: 1,
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
     },
     title: {
-        fontSize: 24,
+        fontSize: 40,
         fontWeight: 'bold',
+        marginTop: 40,
         marginBottom: 20,
+        textAlign: 'center',
+        color: '#fff',
     },
     infoContainer: {
         marginBottom: 30,
-        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
+    },
+    ticketDetailContainer: {
+        marginBottom: 30,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     infoText: {
+        fontWeight: 'bold',
         fontSize: 18,
-        marginBottom: 5, // Adjust spacing between seats
+        marginBottom: 10,
+        color: '#333',
     },
     qrCodeContainer: {
-        marginBottom: 30,
+        marginTop: 20,
         alignItems: 'center',
+        backgroundColor: '#f8f8f8',
+        padding: 15,
+        borderRadius: 5,
     },
     seatText: {
-        fontSize: 16,
-        marginLeft: 10,
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        color: '#1a1a1a',
     },
 });
