@@ -81,6 +81,29 @@ router.post('/signup', async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message }); // Return the error message
     }
 });
+// get the user by its email
+router.get('/user', async (req, res) => {
+    try {
+        const { email } = req.query;  // Get email from query parameters
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required' });
+        }
+
+        // Find the user by their email
+        const user = await User.findOne({ email: email });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Return the user data
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: 'Server error' });
+    }
+});
 
 // PUT update user information by email
 router.put('/update', async (req, res) => {

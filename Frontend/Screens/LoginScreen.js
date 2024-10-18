@@ -3,6 +3,7 @@ import { View, TextInput, Button, Text, StyleSheet, Modal, Pressable, Image, Tou
 import QRCode from 'react-native-qrcode-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as FileSystem from 'expo-file-system';
 
 
 const avatarOptions = [
@@ -42,6 +43,7 @@ const LoginScreen = ({ navigation }) => {
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const router = useRouter();  // Ensure useRouter is imported correctly
 
+
     const handleLogin = async () => {
         if (!email || !password) {
             Alert.alert('Error', 'Please fill in all fields.');
@@ -75,23 +77,62 @@ const LoginScreen = ({ navigation }) => {
         setSelectedTicket(ticket);
         setIsQRCodeModalVisible(true);
     };
-
-    const handleLogout = () => {
-        // Perform logout logic here (e.g., clear tokens or session data)
+    
+    const handleLogout = async () => {
+        const filePath = `${FileSystem.documentDirectory}userData.json`; // Path to the JSON file
+        try {
+            await FileSystem.deleteAsync(filePath); // Delete the user data file
+            console.log('User data file deleted successfully.'); // Log success
+        } catch (error) {
+            console.error('Error deleting user data file:', error); // Log any errors
+        }
         // Navigate to the index page
-        router.replace('/');
-      };
+        router.replace('/'); // Replace with the home page
+    };
+    
 
-    const handleGoHome = () => {
-            const email = email; // Assuming you have user info like email from login
-            const avatar = selectedAvatar; // Assuming you have the selected avatar
-            
-            // Navigate to the home page with email and avatar as parameters
-            router.push({
-                pathname: '/', 
-                params: { email, avatar }
-            });
-      };
+      const saveUserDataToFile = async (userData) => {
+        // Define the path where you want to save the JSON file
+        const filePath = `${FileSystem.documentDirectory}userData.json`;
+    
+        // Convert the user data to a JSON string
+        const jsonData = JSON.stringify(userData, null, 2); // null and 2 are used for pretty formatting
+    
+        try {
+            // Write the JSON data to a file
+            await FileSystem.writeAsStringAsync(filePath, jsonData);
+            console.log('User data saved successfully at:', filePath);
+        } catch (error) {
+            console.error('Error writing to file', error);
+        }
+    };
+
+    const handleGoHome = async () => {
+        const userEmail = email; // Email from the state
+        const avatar = selectedAvatar; // Assuming the avatar is selected and stored correctly
+    
+        console.log("Email:", userEmail); // Log the correct email
+        console.log("Avatar:", avatar); // Log the correct avatar path
+        
+        // Create the data object
+        const userData = {
+            email: userEmail, // Use the correct email
+            avatar: avatar, // Avatar as an image reference
+        };
+    
+        try {
+            // Save the user data and wait for the operation to complete
+            await saveUserDataToFile(userData);
+            console.log('User data saved successfully');
+    
+            // Navigate to the home page after data is saved
+            router.push('/');
+        } catch (error) {
+            console.error('Error saving user data or navigating:', error);
+        }
+    };
+      
+
     const handleUpdateProfile = async () => {
         const updatedData = {
             email,
@@ -159,7 +200,6 @@ const LoginScreen = ({ navigation }) => {
                 <Ionicons name="arrow-back" size={24} color="black" />
                 <Text style={styles.title}>Login</Text>
             </TouchableOpacity>
-            {/* <Text style={styles.title}>Login</Text> */}
             <TextInput
                 style={styles.input}
                 placeholder="Email"
