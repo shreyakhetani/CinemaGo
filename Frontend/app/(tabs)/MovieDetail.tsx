@@ -127,12 +127,10 @@ export default function MovieDetail() {
         <Text style={styles.showtimesTitle}>Select Showtime:</Text>
         {showtimes.map((showtime, index) => {
           const { totalSeats, availableSeats } = calculateSeats(showtime.hallId.seats);
-          const seatPercentage = Math.round((availableSeats / totalSeats) * 100);
 
           console.log(`Showtime ${index}:`, { 
             availableSeats, 
-            totalSeats, 
-            seatPercentage 
+            totalSeats
           });
 
           return (
@@ -156,11 +154,11 @@ export default function MovieDetail() {
                 <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
                 <View style={styles.progressContainer}>
                   <CircularProgress
-                    value={seatPercentage}
+                    value={availableSeats}
                     radius={25}
                     duration={2000}
                     progressValueColor={'#000'}
-                    maxValue={100}
+                    maxValue={totalSeats}
                     title={'Seats'}
                     titleColor={'#000'}
                     titleStyle={{ fontSize: 8 }}
