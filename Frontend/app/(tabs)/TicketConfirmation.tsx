@@ -49,7 +49,7 @@ export default function TicketConfirmationScreen() {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            <Text style={styles.title}>Your Ticket</Text>
+            <Text style={styles.title}>Your Tickets</Text>
             <View style={styles.infoContainer}>
                 <Text style={styles.infoText}>Movie: {movieName}</Text>
                 <Text style={styles.infoText}>Hall: {hallName}</Text>
@@ -60,7 +60,7 @@ export default function TicketConfirmationScreen() {
 
             {selectedSeats.map((seat, index) => (
                 <View key={index} style={styles.ticketDetailContainer}>
-                    <Text style={styles.infoText}>Seat: Row {seat.row + 1}, Col {seat.col + 1}</Text>
+                    <Text style={styles.seatText}>Seat: Row {seat.row + 1}, Col {seat.col + 1}</Text>
                     <View style={styles.qrCodeContainer}>
                         <QRCode
                             value={JSON.stringify({
@@ -85,34 +85,56 @@ export default function TicketConfirmationScreen() {
 const styles = StyleSheet.create({
     container: {
         flexGrow: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
     },
     title: {
-        fontSize: 24,
+        fontSize: 40,
         fontWeight: 'bold',
+        marginTop: 40,
         marginBottom: 20,
+        textAlign: 'center',
+        color: '#fff',
     },
     infoContainer: {
         marginBottom: 30,
-        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     ticketDetailContainer: {
         marginBottom: 30,
-        alignItems: 'center',
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     infoText: {
+        fontWeight: 'bold',
         fontSize: 18,
-        marginBottom: 5,
+        marginBottom: 10,
+        color: '#333',
     },
     qrCodeContainer: {
-        marginBottom: 10,
+        marginTop: 20,
         alignItems: 'center',
+        backgroundColor: '#f8f8f8',
+        padding: 15,
+        borderRadius: 5,
     },
     seatText: {
-        fontSize: 16,
-        marginLeft: 10,
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 15,
+        color: '#1a1a1a',
     },
 });
