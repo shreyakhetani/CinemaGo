@@ -17,10 +17,45 @@ const images: { [key: string]: any } = {
     'splash': require('../../assets/images/splash.png'),
 };
 
+
 const getImageSource = (imageName: string): any => {
-    const baseName = imageName.split('.')[0];
+const baseName = imageName.split('.')[0];
     return images[baseName] || images['splash'];
 };
+
+interface CardInputProps {
+    value: string;
+    onChangeText: (text: string) => void;
+}
+
+const CardInput: React.FC<CardInputProps> = ({ value, onChangeText }) => {
+    const formatCardNumber = (text: string) => {
+        return text.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
+    };
+
+    const handleCardNumberChange = (text: string) => {
+        onChangeText(formatCardNumber(text));
+    };
+
+    return (
+        <View style={styles.inputContainer}>
+        <TextInput
+            placeholder="Card Number"
+            value={value}
+            onChangeText={handleCardNumberChange}
+            keyboardType="numeric"
+            style={styles.cardInput}
+            maxLength={19}
+            placeholderTextColor="#999"
+        />
+        <Image
+            source={require('../../assets/images/visa.webp')}  
+            style={styles.cardIcon}
+        />
+        </View>
+    );
+};
+
 
 type SeatStatus = 'free' | 'booked' | 'selected';
 type Seats = SeatStatus[][];
@@ -191,7 +226,7 @@ export default function SeatSelectionScreen() {
     };           
 
     const handlePayPress = async () => {
-        if (!name || !cardNumber || !expiryDate || !cvv) {
+        if (!name.trim() || !cardNumber.trim() || !expiryDate.trim() || !cvv.trim()) {
             Alert.alert('Error', 'Please enter all payment details.');
             return;
         }
@@ -265,10 +300,7 @@ export default function SeatSelectionScreen() {
     if (loading) {
         return <ActivityIndicator size="large" color="#0000ff" />;
     }
-
-    const formatCardNumber = (text: string) => {
-        return text.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 ');
-    };
+    
 
     const formatExpiryDate = (text: string) => {
         return text.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
@@ -428,21 +460,18 @@ export default function SeatSelectionScreen() {
                     <View style={styles.modalContainer}>
                         <ScrollView contentContainerStyle={styles.modalContent}>
                             <Text style={styles.modalTitle}>Payment Details</Text>
-    
+
                             <TextInput
-                                placeholder="Name"
+                                placeholder="Email"
                                 value={name}
                                 onChangeText={setName}
                                 style={styles.input}
+                                placeholderTextColor="#999"
                             />
                             
-                            <TextInput
-                                placeholder="Card Number"
+                            <CardInput
                                 value={cardNumber}
-                                keyboardType="numeric"
-                                onChangeText={(text) => setCardNumber(formatCardNumber(text))}
-                                style={styles.input}
-                                maxLength={19}
+                                onChangeText={setCardNumber}
                             />
                             
                             <View style={styles.row}>
@@ -453,6 +482,7 @@ export default function SeatSelectionScreen() {
                                     onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
                                     style={[styles.input, styles.smallInput]}
                                     maxLength={5}
+                                    placeholderTextColor="#999"
                                 />
                                 
                                 <TextInput
@@ -462,9 +492,10 @@ export default function SeatSelectionScreen() {
                                     onChangeText={setCvv}
                                     style={[styles.input, styles.smallInput]}
                                     maxLength={3}
+                                    placeholderTextColor="#999"
                                 />
                             </View>
-    
+
                             <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
                                 <Text style={styles.payButtonText}>Pay</Text>
                             </TouchableOpacity>
@@ -762,7 +793,7 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        borderColor: 'gray',
+        borderColor: '#000',
         borderWidth: 1,
         marginBottom: 20,
         paddingHorizontal: 10,
@@ -775,6 +806,25 @@ const styles = StyleSheet.create({
     smallInput: {
         flex: 1,
         marginHorizontal: 5,
+    },
+    inputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#000',
+        borderRadius: 5,
+        marginBottom: 20,
+    },
+    cardInput: {
+        flex: 1,
+        height: 40,
+        paddingHorizontal: 10,
+    },
+    cardIcon: {
+        width: 60,
+        height: 40,
+        resizeMode: 'contain',
+        marginRight: 10,
     },
     payButton: {
         backgroundColor: '#1b293a',
