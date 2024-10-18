@@ -26,17 +26,36 @@ const getImageSource = (imageName: string): any => {
   }
 };
 
+// Update the showtime type to include availableSeats
+type Showtime = {
+  _id: string;
+  showtime: string;
+  hallId: {
+    _id: string;
+    name: string;
+    seats: string[][];
+  };
+};
+
+
 export default function MovieDetail() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const movieId = params.id as string;
 
   const [movie, setMovie] = useState<any>(null);
+  const [showtimes, setShowtimes] = useState<Showtime[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [showtimes, setShowtimes] = useState<any[]>([]);
   
+  
+  const calculateSeats = (seats: string[][]) => {
+    const totalSeats = seats.flat().length;
+    const availableSeats = seats.flat().filter(seat => seat === 'free').length;
+    return { totalSeats, availableSeats };
+  };
+  
+
   useEffect(() => {
     const fetchMovieDetailsAndShowtimes = async () => {
       try {
@@ -46,6 +65,7 @@ export default function MovieDetail() {
         ]);
         
         setMovie(movieResponse.data);
+        console.log('Showtimes response:', JSON.stringify(showtimesResponse.data, null, 2));
         setShowtimes(showtimesResponse.data);
       } catch (error) {
         console.error('Error fetching movie details and showtimes:', error);
@@ -58,13 +78,12 @@ export default function MovieDetail() {
     fetchMovieDetailsAndShowtimes();
   }, [movieId]);
 
-
   const handleShowtimeSelect = (showtime: string, hallId: string) => {
     router.push({
       pathname: '/seatSelection',
       params: { 
         movieId, 
-        showtime: new Date(showtime).toISOString(), // Ensure consistent date format
+        showtime: new Date(showtime).toISOString(),
         hallId 
       }
     });
@@ -86,6 +105,7 @@ export default function MovieDetail() {
     );
   }
 
+  
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
@@ -105,36 +125,57 @@ export default function MovieDetail() {
         </View>
 
         <Text style={styles.showtimesTitle}>Select Showtime:</Text>
-        {showtimes.map((showtime, index) => (
-          <TouchableOpacity 
-            key={index} 
-            style={styles.ticketContainer}
-            onPress={() => handleShowtimeSelect(showtime.showtime, showtime.hallId._id)}
-          >
-            <View style={styles.ticketdetails}>
-              <Text style={styles.time}>{new Date(showtime.showtime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
-              <View style={styles.dateContent}>
-                <Text style={styles.date}>{new Date(showtime.showtime).toDateString()}</Text>
-                <Text style={styles.hall}>{`CinemaGo, ${showtime.hallId.name}`}</Text>
-              </View>
-            </View>
-            <View style={styles.vacacyContainer}>
-              <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
-              <View style={styles.progressContainer}>
-                <CircularProgress
-                  value={60}
-                  radius={25}
-                  duration={2000}
-                  progressValueColor={'#ecf0f1'}
-                />
-                <View style={styles.vacancyContent}>
-                  <Text style={styles.vacancyText}>Available Seats</Text>
-                  <Text style={styles.seats}>50</Text>
+        {showtimes.map((showtime, index) => {
+          const { totalSeats, availableSeats } = calculateSeats(showtime.hallId.seats);
+          const seatPercentage = Math.round((availableSeats / totalSeats) * 100);
+
+          console.log(`Showtime ${index}:`, { 
+            availableSeats, 
+            totalSeats, 
+            seatPercentage 
+          });
+
+          return (
+            <TouchableOpacity 
+              key={index} 
+              style={styles.ticketContainer}
+              onPress={() => handleShowtimeSelect(showtime.showtime, showtime.hallId._id)}
+            >
+              <View style={styles.ticketdetails}>
+                <Text style={styles.time}>
+                  {new Date(showtime.showtime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                </Text>
+                <View style={styles.dateContent}>
+                  <Text style={styles.date}>
+                    {new Date(showtime.showtime).toLocaleDateString()}
+                  </Text>
+                  <Text style={styles.hall}>{`CinemaGo, ${showtime.hallId.name}`}</Text>
                 </View>
               </View>
-            </View>
-          </TouchableOpacity>
-        ))}
+              <View style={styles.vacacyContainer}>
+                <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
+                <View style={styles.progressContainer}>
+                  <CircularProgress
+                    value={seatPercentage}
+                    radius={25}
+                    duration={2000}
+                    progressValueColor={'#000'}
+                    maxValue={100}
+                    title={'Seats'}
+                    titleColor={'#000'}
+                    titleStyle={{ fontSize: 8 }}
+                    activeStrokeColor={'#2ecc71'}
+                    inActiveStrokeColor={'#e74c3c'}
+                  />
+                  <View style={styles.vacancyContent}>
+                    <Text style={styles.vacancyText}>Available Seats</Text>
+                    <Text style={styles.seats}>{`${availableSeats}/${totalSeats}`}</Text>
+                  </View>
+                </View>
+              </View>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       <Footer />
     </ScrollView>
@@ -207,16 +248,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 10,
   },
   time: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#1b293a',
   },
   dateContent: {
     alignItems: 'flex-end',
   },
   date: {
     fontSize: 16,
+    color: '#666',
+    marginBottom: 4,
   },
   hall: {
     fontSize: 14,
@@ -235,16 +280,20 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
   },
   vacancyContent: {
     marginLeft: 10,
+    alignItems: 'flex-end',
   },
   vacancyText: {
     fontSize: 12,
+    color: '#666',
   },
   seats: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
+    color: '#1b293a',
   },
   centerContainer: {
     flex: 1,
