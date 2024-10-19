@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: '#000',
   },
   headerImage: {
     width: '100%', // Full width for a larger header image
