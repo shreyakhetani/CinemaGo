@@ -363,13 +363,6 @@ const LoginScreen = ({ navigation }) => {
                                 <Button title="Delete Account" onPress={handleDeleteAccount} color="red" />
                             </View>
                         )}
-
-                        <Pressable
-                            style={styles.closeButton}
-                            onPress={() => setIsModalVisible(false)}
-                        >
-                            <Text style={styles.closeButtonText}>Close</Text>
-                        </Pressable>
                     </View>
                 </View>
             </Modal>
