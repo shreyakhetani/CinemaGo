@@ -4,6 +4,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
+import { useRouter } from 'expo-router'; // or import { useNavigation } from '@react-navigation/native';
 
 const API_BASE_URL = 'http://192.168.0.12:5000';
 
@@ -15,6 +16,7 @@ interface UserData {
 }
 
 export default function TicketConfirmationScreen() {
+    const router = useRouter();  // Initialize the router here
     const params = useLocalSearchParams();
     const selectedSeats: SelectedSeat[] = params.selectedSeats ? JSON.parse(params.selectedSeats as string) : [];
     const Email = params.Email as string;
@@ -23,7 +25,7 @@ export default function TicketConfirmationScreen() {
     const showtime = params.showtime as string;
     const movieName = params.movieName as string;
     const hallName = params.hallName as string;
-    
+    const [UserEmail, setUserEmail] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [movieDetails, setMovieDetails] = useState<any>(null);
     const filePath = `${FileSystem.documentDirectory}userData.json`;
@@ -35,6 +37,7 @@ export default function TicketConfirmationScreen() {
         const fetchMovieDetails = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
+                console.log('Movie Details Response:', response.data); // Add this to log the response
                 setMovieDetails(response.data);
             } catch (error) {
                 console.error('Error fetching movie details:', error);
@@ -42,11 +45,18 @@ export default function TicketConfirmationScreen() {
                 setLoading(false);
             }
         };
-
+    
         fetchMovieDetails();
         loadUserDataFromFile(); // Ensure this is called after fetching movie details
     }, [movieId]);
-
+    
+    // Use another useEffect to run the ticket confirmation after UserEmail is updated
+    useEffect(() => {
+        if (UserEmail) {
+            handleTicketConfirmation(); // Run the confirmation logic when UserEmail is available
+        }
+    }, [UserEmail]);
+    
     const loadUserDataFromFile = async () => {
         try {
             const fileInfo = await FileSystem.getInfoAsync(filePath);
@@ -55,16 +65,16 @@ export default function TicketConfirmationScreen() {
                 setLoading(false);
                 return;
             }
-
+    
             const fileContent = await FileSystem.readAsStringAsync(filePath);
             const userData: UserData = JSON.parse(fileContent);
-
+    
             const useremail = userData.email;
-
+    
             console.log("Email for ticket from file:", useremail);  // Log the email
-
+    
             if (useremail) {
-                await fetchUserData(useremail);  // Fetch user data if email exists
+                setUserEmail(useremail);  // Fetch user data if email exists
             } else {
                 setError('No email found in user data.');
                 setLoading(false);
@@ -74,7 +84,51 @@ export default function TicketConfirmationScreen() {
             setError('Error loading user data from file.');
         }
     };
-
+    
+    const handleTicketConfirmation = async () => {
+        if (!movieDetails) {
+            console.log('Movie details not yet available.');
+            return;  // Wait until the movie details are fetched
+        }
+    
+        if (Email === UserEmail) {
+            const ticketData = {
+                movieName: movieDetails.name,
+                hallName: movieDetails.halls,
+                showtime: showtime,
+                duration: movieDetails.duration,
+                language: movieDetails.language,
+                seat: selectedSeats.map((seat) => `Row ${seat.row + 1}, Col ${seat.col + 1}`).join(', '),
+                userEmail: UserEmail,
+            };
+    
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/tickets/new`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(ticketData),
+                });
+    
+                if (response.ok) {
+                    Alert.alert('Success', 'Your ticket has been confirmed!', [
+                        {
+                            text: 'OK',
+                            onPress: () => {
+                                router.push('/');  // Navigate to index.tsx after the success alert
+                            },
+                        },
+                    ]);
+                } else {
+                    console.log('Failed to confirm the ticket.');
+                }
+            } catch (error) {
+                console.error('Error confirming the ticket:', error);
+            }
+        }
+    };
+    
     const fetchUserData = async (email: string) => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/user?email=${email}`);
@@ -90,13 +144,7 @@ export default function TicketConfirmationScreen() {
         }
     };
 
-    const handleTicketConfirmation = () => {
-        if (Email === firstName) {
-            Alert.alert('Ticket Confirmed', 'Enjoy your movie!');
-        } else {
-            Alert.alert('Error', 'Email mismatch with user data.');
-        }
-    };
+    
 
     if (loading) {
         return <ActivityIndicator size="large" color="#0000ff" />;

@@ -2,8 +2,8 @@ const express = require('express');
 const Ticket = require('../models/Ticket');
 const router = express.Router();
 
-// POST a new ticket
 router.post('/new', async (req, res) => {
+    console.log('Ticket request received:', req.body);  // Log the incoming request
     try {
         const { movieName, hallName, showtime, duration, language, seat, userEmail } = req.body;
         
@@ -20,6 +20,7 @@ router.post('/new', async (req, res) => {
 
         // Save ticket to the database
         const savedTicket = await newTicket.save();
+        console.log('Ticket successfully saved:', savedTicket);  // Log success
         res.status(201).json(savedTicket);
     } catch (error) {
         console.error(error);
