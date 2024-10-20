@@ -355,13 +355,11 @@ const styles = StyleSheet.create({
       marginRight: 10,
     },
     button: {
-      backgroundColor: '#163d71',
-    paddingVertical: 15,
-    paddingHorizontal: 94,
-    borderRadius: 8,
-    marginTop: 20,
-    alignItems: 'center',
-    alignSelf: 'center',
+        backgroundColor: '#163d71',
+        paddingVertical: 15,
+        paddingHorizontal: 30,
+        borderRadius: 5,
+        marginTop: 10
     },
     buttonText: {
       color: '#fff',
@@ -369,35 +367,33 @@ const styles = StyleSheet.create({
       fontWeight: 'bold',
     },
     avatarStyle: {
-      width: 60, // Width of the avatar
-      height: 60, // Height of the avatar
-      borderRadius: 30, // Circle shape
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        borderWidth: 2,
+        borderColor: '#fff',
     },
     circleButton: {
-      position: 'absolute',
-      right: 20,
-      top: 20,
-      width: 60, // Size of the button
-      height: 60,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderRadius: 30,
-      borderWidth: 2,
-      borderColor: 'black',
-      backgroundColor: 'white',
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        borderRadius: 50,
+        borderWidth: 2,
+        overflow: 'hidden',
+        borderColor: 'black',
+        backgroundColor: 'white',
     },
     viewDetailsButton: {
-      backgroundColor: '#13335d', // Button background color
-      paddingVertical: 10, // Vertical padding
-      paddingHorizontal: 20, // Horizontal padding
-      borderRadius: 5, // Rounded corners
-      marginTop: 15, // Space from the movie content
-      alignItems: 'center', // Center align text inside the button
-      justifyContent: 'center',
+        backgroundColor: '#1e2a3a',
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 5,
+        marginTop: 15,
+        alignItems: 'center',
   },
   viewDetailsText: {
-      color: 'white', // Text color
-      fontSize: 16, // Text size
-      fontWeight: 'bold', // Bold text for emphasis
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
