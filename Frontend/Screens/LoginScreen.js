@@ -270,7 +270,7 @@ const LoginScreen = ({ navigation }) => {
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
                                 <View style={styles.avatarContainer}>
-                                    <Image source={avatar} style={styles.avatar} />
+                                    <Image source={selectedAvatar} style={styles.avatar} />
                                 </View>
                                 <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
                                  {/* Log Out Button */}

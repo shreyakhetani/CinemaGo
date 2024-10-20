@@ -85,13 +85,50 @@ export default function TicketConfirmationScreen() {
         }
     };
     
-    const handleTicketConfirmation = async () => {
-        if (!movieDetails) {
-            console.log('Movie details not yet available.');
-            return;  // Wait until the movie details are fetched
+const handleTicketConfirmation = async () => {
+    if (!movieDetails) {
+        console.log('Movie details not yet available.');
+        return;  // Wait until the movie details are fetched
+    }
+
+   
+
+    if (Email === UserEmail) {
+        const ticketData = {
+            movieName: movieDetails.name,
+            hallName: movieDetails.halls,
+            showtime: showtime,
+            duration: movieDetails.duration,
+            language: movieDetails.language,
+            seat: selectedSeats.map((seat) => `Row ${seat.row + 1}, Col ${seat.col + 1}`).join(', '),
+            userEmail: UserEmail,
+        };
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/tickets/new`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(ticketData),
+            });
+
+            if (response.ok) {
+                Alert.alert('Success', 'Your ticket has been successfully confirmed! Please check your profile for more details.', [
+                    {
+                        text: 'OK',
+                        onPress: () => {
+                            router.push('/');  // Navigate to index.tsx after the success alert
+                        },
+                    },
+                ]);
+            } else {
+                console.log('Failed to confirm the ticket.');
+            }
+        } catch (error) {
+            console.error('Error confirming the ticket:', error);
         }
-    
-        if (Email === UserEmail) {
+    } else {
+        try {
             const ticketData = {
                 movieName: movieDetails.name,
                 hallName: movieDetails.halls,
@@ -99,35 +136,35 @@ export default function TicketConfirmationScreen() {
                 duration: movieDetails.duration,
                 language: movieDetails.language,
                 seat: selectedSeats.map((seat) => `Row ${seat.row + 1}, Col ${seat.col + 1}`).join(', '),
-                userEmail: UserEmail,
+                userEmail: Email,
             };
-    
-            try {
-                const response = await fetch(`${API_BASE_URL}/api/tickets/new`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(ticketData),
-                });
-    
-                if (response.ok) {
-                    Alert.alert('Success', 'Your ticket has been confirmed!', [
-                        {
-                            text: 'OK',
-                            onPress: () => {
-                                router.push('/');  // Navigate to index.tsx after the success alert
-                            },
-                        },
-                    ]);
-                } else {
-                    console.log('Failed to confirm the ticket.');
-                }
-            } catch (error) {
-                console.error('Error confirming the ticket:', error);
+        
+            // Send email with ticket data and QR code
+            const emailResponse = await fetch(`${API_BASE_URL}/api/email/send-ticket-email`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(ticketData),
+            });
+        
+            if (emailResponse.ok) {
+                Alert.alert('Success', 'Check your email for the ticket!', [
+                    {  text: 'OK',
+                        onPress: () => {
+                            router.push('/');  // Navigate to index.tsx after the success alert
+                        },}
+                ]);
+                console.log('Email sent successfully');
+            } else {
+                console.log('Failed to send the email.');
             }
+        } catch (error) {
+            console.error('Error sending the email:', error);
         }
-    };
+        
+    }
+};
     
     const fetchUserData = async (email: string) => {
         try {

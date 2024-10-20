@@ -5,7 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const moviesRoutes = require('./routes/Movies');
 const authRoutes = require('./routes/auth');
-const ticketRoutes = require('./routes/ticket');  // Import ticket routes
+const ticketRoutes = require('./routes/ticket');
+const emailRoutes = require('./routes/email');  // Import email routes
 
 dotenv.config();
 
@@ -13,15 +14,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-})
-.then(() => console.log('Connected to MongoDB Atlas'))
-.catch(err => {
-    console.error('MongoDB connection failed:', err.message);
-    process.exit(1);
-});
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Connected to MongoDB Atlas'))
+    .catch(err => {
+        console.error('MongoDB connection failed:', err.message);
+        process.exit(1);
+    });
 
 // Middleware
 app.use(express.json());
@@ -33,7 +31,8 @@ app.use('/images', express.static(path.join(__dirname, 'public/images')));
 // Routes
 app.use('/api/movies', moviesRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/tickets', ticketRoutes);  // Use ticket routes
+app.use('/api/tickets', ticketRoutes);
+app.use('/api/email', emailRoutes);  // Use email routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
