@@ -63,13 +63,13 @@ const LoginScreen = ({ navigation }) => {
     };
 
     const fetchTickets = async () => {
-        console.log('Fetching tickets for:', email); // Debugging line
+        // console.log('Fetching tickets for:', email); // Debugging line
         try {
             const ticketResponse = await fetch(`http://192.168.0.12:5000/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
-                console.log('Tickets fetched successfully:', ticketData); // Debugging line
+                // console.log('Tickets fetched successfully:', ticketData); // Debugging line
                 setTickets(ticketData); // Update state with ticket data
             }
         } catch (error) {
@@ -84,7 +84,7 @@ const LoginScreen = ({ navigation }) => {
         setIsQRCodeModalVisible(true);
     };
     useEffect(() => {
-        console.log("Updated tickets:", tickets); // Logs tickets after state update
+        // console.log("Updated tickets:", tickets); // Logs tickets after state update
     }, [tickets]); // The effect will run whenever `tickets` state changes
 
     // Fetch tickets when the component mounts
@@ -270,7 +270,7 @@ const LoginScreen = ({ navigation }) => {
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
                                 <View style={styles.avatarContainer}>
-                                    <Image source={selectedAvatar} style={styles.avatar} />
+                                    <Image source={avatar} style={styles.avatar} />
                                 </View>
                                 <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
                                  {/* Log Out Button */}
@@ -297,12 +297,13 @@ const LoginScreen = ({ navigation }) => {
                         {tickets.length > 0 ? (
                         tickets.map((ticket, index) => (
                             <View key={index} style={styles.ticketItem}>
-                                <Text>Movie: {ticket.movieName}</Text>
-                                <Text>Hall: {ticket.hallName}</Text>
-                                <Text>Showtime: {new Date(ticket.showtime).toLocaleString()}</Text>
-                                <Text>Duration: {ticket.duration}</Text>
-                                <Text>Language: {ticket.language}</Text>
-                                <Text>Seats: {ticket.seat}</Text>
+                                <Text style={styles.ticketItemText}>Movie: <Text style={styles.ticketDetail}>{ticket.movieName}</Text></Text>
+                                <Text style={styles.ticketItemText}>Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text></Text>
+                                <Text style={styles.ticketItemText}>Showtime: <Text style={styles.ticketDetail}>{new Date(ticket.showtime).toLocaleString()}</Text></Text>
+                                <Text style={styles.ticketItemText}>Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text></Text>
+                                <Text style={styles.ticketItemText}>Language: <Text style={styles.ticketDetail}>{ticket.language}</Text></Text>
+                                <Text style={styles.ticketItemText}>Seats: <Text style={styles.ticketDetail}>{ticket.seat}</Text></Text>
+
                                 {/* Generate QR Code for each seat */}
                                 <TouchableOpacity
                                     style={styles.ticketButton}
@@ -436,15 +437,17 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
       },
     modalView: {
-        width: '90%',
-        backgroundColor: 'white',
+        backgroundColor: '#f4f4f4', // Lighter background for better visibility
+        padding: 30,
         borderRadius: 20,
-        padding: 20,
+        width: '80%',
+        alignItems: 'center',
+        justifyContent: 'center',
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
+        shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5,
+        elevation: 5, // Adds shadow effect for depth
     },
     tabContainer: {
         flexDirection: 'row',
@@ -479,30 +482,56 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     ticketSection: {
-        marginBottom: 20,
+        backgroundColor: '#1c1c1c', // Dark background for a cinema feel
+        padding: 20,
+        borderRadius: 10,
     },
     ticketItem: {
-        padding: 10,
-        marginVertical: 8,
-        backgroundColor: '#6200ea',
-        borderRadius: 8,
+        backgroundColor: '#222', // Dark background to keep the cinema theme
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 15, // Rounded corners for a modern look
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 6, // Adds depth to the card
+        alignItems: 'flex-start', // Align text to the left
+        width: '100%',
+        minHeight: 120,
+        borderWidth: 1,
+        borderColor: '#444', // A subtle border to separate each ticket
     },
     ticketText: {
+        color: '#f0f0f0', // Light color text for better contrast
         fontSize: 16,
-        color: '#fff', // Adjust the color as needed
         marginBottom: 5,
-        textAlign: 'center', // Center the text
     },
     ticketButton: {
+        backgroundColor: '#f57c00', // Cinema-inspired orange button color
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 8,
         marginTop: 10,
-        paddingVertical: 6,
-        paddingHorizontal: 12,
-        backgroundColor: '#fff',
-        borderRadius: 4,
+        alignSelf: 'center', // Center the button
+        width: 'auto',
+    },
+    ticketItemText: {
+        color: '#f0f0f0', // Light-colored text for readability
+        fontSize: 16,
+        marginBottom: 5,
+        fontWeight: '600', // Slightly bolder text for labels
+    },
+    ticketDetail: {
+        color: '#ffcc00', // Bright yellow/orange for the details to stand out
+        fontSize: 16,
+        fontWeight: '500', // Slightly lighter text for the ticket details
     },
     ticketButtonText: {
-        color: '#6200ea',
-        textAlign: 'center',
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center', // Ensure text is centered in button
     },
     EditProfileSection: {
         marginBottom: 20,
@@ -555,22 +584,30 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     qrCodeTitle: {
-        fontSize: 20,
-        marginBottom: 10,
-        textAlign: 'center',
+        color: '#ff8c00', // Cinema-style orange for the title
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 20,
     },
     modalContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Semi-transparent black background
     },
     modalView: {
         backgroundColor: 'white',
-        borderRadius: 10,
-        padding: 20,
-        width: '90%',
-        alignItems: 'center', // Center items in modal
+        padding: 30,
+        borderRadius: 20,
+        width: '80%',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    closeModalButton: {
+        backgroundColor: '#ff4d4d', // Close button in red for attention
+        padding: 10,
+        borderRadius: 50,
+        marginTop: 20,
     },
 });
 
