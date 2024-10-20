@@ -1,31 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Modal, Pressable, Image, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 
-
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
     require('../assets/images/avatars/avatar2.jpg'),
     require('../assets/images/avatars/avatar3.jpg'),
     require('../assets/images/avatars/avatar4.jpg'),
-];
-
-// Sample ticket data for demo purposes
-const availableSeats = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'C1', 'C2', 'C3'];
-
-const getRandomSeat = () => {
-    const randomIndex = Math.floor(Math.random() * availableSeats.length);
-    return availableSeats[randomIndex];
-};
-
-// Sample ticket data with random seat selection
-const sampleTickets = [
-    { id: 1, movieName: 'Inception', date: '2024-10-20', time: '19:30', seat: getRandomSeat() },
-    { id: 2, movieName: 'The Matrix', date: '2024-10-22', time: '21:00', seat: getRandomSeat() },
-    { id: 3, movieName: 'Interstellar', date: '2024-10-25', time: '18:45', seat: getRandomSeat() },
 ];
 
 const LoginScreen = ({ navigation }) => {
@@ -37,12 +21,13 @@ const LoginScreen = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isQRCodeModalVisible, setIsQRCodeModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [tickets, setTickets] = useState([]);
+
     // States for EditProfile
     const [newFirstName, setNewFirstName] = useState('');
     const [newLastName, setNewLastName] = useState('');
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
-    const router = useRouter();  // Ensure useRouter is imported correctly
-
+    const router = useRouter();
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -51,6 +36,7 @@ const LoginScreen = ({ navigation }) => {
         }
 
         try {
+            // Login request
             const response = await fetch('http://192.168.0.12:5000/api/auth/login', {
                 method: 'POST',
                 headers: {
@@ -64,6 +50,9 @@ const LoginScreen = ({ navigation }) => {
             if (response.ok) {
                 setUserData({ firstName: data.firstName, lastName: data.lastName, phoneNumber: data.phoneNumber });
                 setIsModalVisible(true);
+
+                // Now fetch tickets after login
+                fetchTickets();
             } else {
                 Alert.alert('Error', data.message || 'Login failed. Please try again.');
             }
@@ -73,11 +62,36 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
+    const fetchTickets = async () => {
+        console.log('Fetching tickets for:', email); // Debugging line
+        try {
+            const ticketResponse = await fetch(`http://192.168.0.12:5000/api/tickets/tickets?email=${email}`);
+            const ticketData = await ticketResponse.json();
+
+            if (ticketResponse.ok) {
+                console.log('Tickets fetched successfully:', ticketData); // Debugging line
+                setTickets(ticketData); // Update state with ticket data
+            }
+        } catch (error) {
+            console.error('Error fetching tickets:', error);
+            Alert.alert('Error', 'An error occurred while fetching tickets.');
+        }
+    };
+
+
     const handleTicketPress = (ticket) => {
         setSelectedTicket(ticket);
         setIsQRCodeModalVisible(true);
     };
-    
+    useEffect(() => {
+        console.log("Updated tickets:", tickets); // Logs tickets after state update
+    }, [tickets]); // The effect will run whenever `tickets` state changes
+
+    // Fetch tickets when the component mounts
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
     const handleLogout = async () => {
         const filePath = `${FileSystem.documentDirectory}userData.json`; // Path to the JSON file
         try {
@@ -278,55 +292,59 @@ const LoginScreen = ({ navigation }) => {
                             
                         )}
                         {/* Tickets Tab */}
-                                    {activeTab === 'tickets' && (
-                                        <ScrollView style={styles.ticketSection}>
-                                            {sampleTickets.map((ticket) => (
-                                                <View key={ticket.id} style={styles.ticketItem}>
-                                                    <Text style={styles.ticketText}>
-                                                        {ticket.movieName} - {ticket.date} - {ticket.time}
-                                                    </Text>
-                                                    <Text style={styles.ticketText}>
-                                                        Seat: {ticket.seat}  {/* Display selected seat */}
-                                                    </Text>
-                                                    <TouchableOpacity 
-                                                        style={styles.ticketButton} 
-                                                        onPress={() => handleTicketPress(ticket)}
-                                                    >
-                                                        <Text style={styles.ticketButtonText}>Show QR Code</Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            ))}
-                                        </ScrollView>
-                                    )}
+                        {activeTab === 'tickets' && (
+                    <ScrollView style={styles.ticketSection}>
+                        {tickets.length > 0 ? (
+                        tickets.map((ticket, index) => (
+                            <View key={index} style={styles.ticketItem}>
+                                <Text>Movie: {ticket.movieName}</Text>
+                                <Text>Hall: {ticket.hallName}</Text>
+                                <Text>Showtime: {new Date(ticket.showtime).toLocaleString()}</Text>
+                                <Text>Duration: {ticket.duration}</Text>
+                                <Text>Language: {ticket.language}</Text>
+                                <Text>Seats: {ticket.seat}</Text>
+                                {/* Generate QR Code for each seat */}
+                                <TouchableOpacity
+                                    style={styles.ticketButton}
+                                    onPress={() => handleTicketPress(ticket)}
+                                >
+                                    <Text style={styles.ticketButtonText}>Show QR Code</Text>
+                                </TouchableOpacity>
+                            </View>
+                        ))
+                    ) : (
+                        <Text style={styles.noTicketsText}>You don't have any tickets.</Text>
+                    )}
+                    </ScrollView>
+                )}
 
-                                    {/* QR Code Modal */}
-                                    <Modal
-                                        animationType="slide"
-                                        transparent={true}
-                                        visible={isQRCodeModalVisible}
-                                        onRequestClose={() => setIsQRCodeModalVisible(false)}
+                {/* QR Code Modal */}
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={isQRCodeModalVisible}
+                    onRequestClose={() => setIsQRCodeModalVisible(false)}
+                >
+                    <View style={styles.modalContainer}>
+                        <View style={styles.modalView}>
+                            {selectedTicket && (
+                                <>
+                                    <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
+                                    <QRCode
+                                        value={`Movie: ${selectedTicket.movieName}\nHall: ${selectedTicket.hallName}\nShowtime: ${new Date(selectedTicket.showtime).toLocaleString()}\nSeats: ${selectedTicket.seat}`}
+                                        size={200}
+                                    />
+                                    <Pressable
+                                        style={styles.closeModalButton}
+                                        onPress={() => setIsQRCodeModalVisible(false)}
                                     >
-                                        <View style={styles.modalContainer}>
-                                            <View style={styles.modalView}>
-                                                {selectedTicket && (
-                                                    <>
-                                                        <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
-                                                        <QRCode
-                                                            value={`Movie: ${selectedTicket.movieName}\nDate: ${selectedTicket.date}\nTime: ${selectedTicket.time}\nSeat: ${selectedTicket.seat}`}
-                                                            size={200} // Adjust size as needed
-                                                        />
-                                                    </>
-                                                )}
-                                                <Pressable
-                                                    style={styles.closeButton}
-                                                    onPress={() => setIsQRCodeModalVisible(false)}
-                                                >
-                                                    <Text style={styles.closeButtonText}>Close</Text>
-                                                </Pressable>
-                                            </View>
-                                        </View>
-                                    </Modal>
-
+                                        <Ionicons name="close" size={24} color="black" />
+                                    </Pressable>
+                                </>
+                            )}
+                        </View>
+                    </View>
+                </Modal>
                         {/* EditProfile Tab */}
                         {activeTab === 'EditProfile' && (
                             <View style={styles.EditProfileSection}>
