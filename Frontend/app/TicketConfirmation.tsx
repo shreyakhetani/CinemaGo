@@ -3,24 +3,35 @@ import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, ScrollView } 
 import QRCode from 'react-native-qrcode-svg';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 
 const API_BASE_URL = 'http://192.168.0.12:5000';
 
 type SelectedSeat = { row: number; col: number };
+interface UserData {
+    email?: string;
+    firstName?: string;
+    avatar?: string | number;
+}
 
 export default function TicketConfirmationScreen() {
     const params = useLocalSearchParams();
     const selectedSeats: SelectedSeat[] = params.selectedSeats ? JSON.parse(params.selectedSeats as string) : [];
+    const Email = params.Email as string;
     const movieId = params.movieId as string;
     const hallId = params.hallId as string;
     const showtime = params.showtime as string;
     const movieName = params.movieName as string;
     const hallName = params.hallName as string;
-
+    
     const [loading, setLoading] = useState(true);
     const [movieDetails, setMovieDetails] = useState<any>(null);
+    const filePath = `${FileSystem.documentDirectory}userData.json`;
+    const [firstName, setFirstName] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        console.log('Email:', Email); // Log the email for verification
         const fetchMovieDetails = async () => {
             try {
                 const response = await axios.get(`${API_BASE_URL}/api/movies/movies/${movieId}`);
@@ -33,7 +44,59 @@ export default function TicketConfirmationScreen() {
         };
 
         fetchMovieDetails();
+        loadUserDataFromFile(); // Ensure this is called after fetching movie details
     }, [movieId]);
+
+    const loadUserDataFromFile = async () => {
+        try {
+            const fileInfo = await FileSystem.getInfoAsync(filePath);
+            if (!fileInfo.exists) {
+                console.log('User data file does not exist.');
+                setLoading(false);
+                return;
+            }
+
+            const fileContent = await FileSystem.readAsStringAsync(filePath);
+            const userData: UserData = JSON.parse(fileContent);
+
+            const useremail = userData.email;
+
+            console.log("Email for ticket from file:", useremail);  // Log the email
+
+            if (useremail) {
+                await fetchUserData(useremail);  // Fetch user data if email exists
+            } else {
+                setError('No email found in user data.');
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Error loading user data from file:', error);
+            setError('Error loading user data from file.');
+        }
+    };
+
+    const fetchUserData = async (email: string) => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/user?email=${email}`);
+            const userData: UserData = await response.json();
+            if (response.ok && userData) {
+                setFirstName(userData.firstName || null);
+            } else {
+                setError('Unable to fetch user data.');
+            }
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            setError('Error fetching user data.');
+        }
+    };
+
+    const handleTicketConfirmation = () => {
+        if (Email === firstName) {
+            Alert.alert('Ticket Confirmed', 'Enjoy your movie!');
+        } else {
+            Alert.alert('Error', 'Email mismatch with user data.');
+        }
+    };
 
     if (loading) {
         return <ActivityIndicator size="large" color="#0000ff" />;
@@ -42,10 +105,6 @@ export default function TicketConfirmationScreen() {
     if (!Array.isArray(selectedSeats)) {
         return <Text>No seats selected</Text>;
     }
-
-    const handleTicketConfirmation = () => {
-        Alert.alert('Ticket Confirmed', 'Enjoy your movie!');
-    };
 
     return (
         <ScrollView contentContainerStyle={styles.container}>

@@ -107,6 +107,7 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
+    
     const handleGoHome = async () => {
         const userEmail = email; // Email from the state
         const avatar = selectedAvatar; // Assuming the avatar is selected and stored correctly

@@ -4,14 +4,15 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const moviesRoutes = require('./routes/Movies');
-const authRoutes = require('./routes/auth'); 
+const authRoutes = require('./routes/auth');
+const ticketRoutes = require('./routes/ticket');  // Import ticket routes
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enhanced MongoDB Connection
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -26,12 +27,13 @@ mongoose.connect(process.env.MONGO_URI, {
 app.use(express.json());
 app.use(cors());
 
-// Serve static files (e.g., images)
+// Serve static files
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 
 // Routes
 app.use('/api/movies', moviesRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/tickets', ticketRoutes);  // Use ticket routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

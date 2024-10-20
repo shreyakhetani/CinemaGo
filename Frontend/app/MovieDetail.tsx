@@ -65,7 +65,7 @@ export default function MovieDetail() {
         ]);
         
         setMovie(movieResponse.data);
-        console.log('Showtimes response:', JSON.stringify(showtimesResponse.data, null, 2));
+        // console.log('Showtimes response:', JSON.stringify(showtimesResponse.data, null, 2));
         setShowtimes(showtimesResponse.data);
       } catch (error) {
         console.error('Error fetching movie details and showtimes:', error);
@@ -128,10 +128,10 @@ export default function MovieDetail() {
         {showtimes.map((showtime, index) => {
           const { totalSeats, availableSeats } = calculateSeats(showtime.hallId.seats);
 
-          console.log(`Showtime ${index}:`, { 
-            availableSeats, 
-            totalSeats
-          });
+          // console.log(`Showtime ${index}:`, { 
+          //   availableSeats, 
+          //   totalSeats
+          // });
 
           return (
             <TouchableOpacity 
@@ -153,18 +153,18 @@ export default function MovieDetail() {
               <View style={styles.vacacyContainer}>
                 <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
                 <View style={styles.progressContainer}>
-                  <CircularProgress
-                    value={availableSeats}
-                    radius={25}
-                    duration={2000}
-                    progressValueColor={'#000'}
-                    maxValue={totalSeats}
-                    title={'Seats'}
-                    titleColor={'#000'}
-                    titleStyle={{ fontSize: 8 }}
-                    activeStrokeColor={'#2ecc71'}
-                    inActiveStrokeColor={'#e74c3c'}
-                  />
+                <CircularProgress
+                  value={availableSeats}
+                  radius={25}
+                  duration={2000}
+                  progressValueColor={'#000'}
+                  maxValue={totalSeats}
+                  title={'Seats'}
+                  titleColor={'#000'}
+                  titleStyle={{ fontSize: 8, marginTop: -10 }} // Reduce space between title and number
+                  activeStrokeColor={'#2ecc71'}
+                  inActiveStrokeColor={'#e74c3c'}
+                />
                   <View style={styles.vacancyContent}>
                     <Text style={styles.vacancyText}>Available Seats</Text>
                     <Text style={styles.seats}>{`${availableSeats}/${totalSeats}`}</Text>

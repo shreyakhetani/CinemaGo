@@ -81,7 +81,7 @@ export default function SeatSelectionScreen() {
     const [pensionerTickets, setPensionerTickets] = useState(0);
     const [studentTickets, setStudentTickets] = useState(0);
     const [isPaymentModalVisible, setIsPaymentModalVisible] = useState(false); 
-    const [name, setName] = useState('');
+    const [Email, setEmail] = useState('');
     const [cardNumber, setCardNumber] = useState('');
     const [expiryDate, setExpiryDate] = useState('');
     const [cvv, setCvv] = useState('');
@@ -157,10 +157,10 @@ export default function SeatSelectionScreen() {
 
     const fetchSeatsData = () => {
         setLoading(true);
-        console.log(`Fetching seats for movie: ${movieId}, hall: ${hallId}, showtime: ${showtime}`);
+        // console.log(`Fetching seats for movie: ${movieId}, hall: ${hallId}, showtime: ${showtime}`);
         axios.get<ShowtimeData[]>(`${API_BASE_URL}/api/movies/movies/${movieId}/showtimes`)
             .then((response) => {
-                console.log('API Response:', JSON.stringify(response.data, null, 2));
+                // console.log('API Response:', JSON.stringify(response.data, null, 2));
                 
                 const foundShowtime = response.data.find(item => 
                     item.hallId._id === hallId && 
@@ -168,11 +168,11 @@ export default function SeatSelectionScreen() {
                 );
                 
                 if (foundShowtime) {
-                    console.log('Found matching showtime:', JSON.stringify(foundShowtime, null, 2));
+                    // console.log('Found matching showtime:', JSON.stringify(foundShowtime, null, 2));
                     setHallName(foundShowtime.hallId.name);
                     
                     if (foundShowtime.hallId.seats && Array.isArray(foundShowtime.hallId.seats)) {
-                        console.log('Setting seats:', foundShowtime.hallId.seats);
+                        // console.log('Setting seats:', foundShowtime.hallId.seats);
                         setSeats(foundShowtime.hallId.seats);
                     } else {
                         console.error('Seats data is not available or not an array');
@@ -181,7 +181,7 @@ export default function SeatSelectionScreen() {
                         setSeats(defaultSeats);
                     }
                 } else {
-                    console.log('No matching showtime found');
+                    // console.log('No matching showtime found');
                     setSeats([]);
                 }
                 setLoading(false);
@@ -225,8 +225,8 @@ export default function SeatSelectionScreen() {
         fetchSeatsData(); 
     };           
 
-    const handlePayPress = async () => {
-        if (!name.trim() || !cardNumber.trim() || !expiryDate.trim() || !cvv.trim()) {
+    const handlePayPress = async () => { 
+        if (!Email.trim() || !cardNumber.trim() || !expiryDate.trim() || !cvv.trim()) {
             Alert.alert('Error', 'Please enter all payment details.');
             return;
         }
@@ -285,7 +285,8 @@ export default function SeatSelectionScreen() {
                         hallId,
                         showtime: foundShowtime.showtime,
                         movieName: movie.name,
-                        hallName: foundShowtime.hallId.name
+                        hallName: foundShowtime.hallId.name,
+                        Email // Passing the email as a parameter
                     },
                 });
             } else {
@@ -296,7 +297,7 @@ export default function SeatSelectionScreen() {
             Alert.alert('Booking Failed', 'The seats could not be booked. Please try again.');
         }
     };
-
+    
     if (loading) {
         return <ActivityIndicator size="large" color="#0000ff" />;
     }
@@ -463,8 +464,8 @@ export default function SeatSelectionScreen() {
 
                             <TextInput
                                 placeholder="Email"
-                                value={name}
-                                onChangeText={setName}
+                                value={Email}
+                                onChangeText={setEmail}
                                 style={styles.input}
                                 placeholderTextColor="#999"
                             />
