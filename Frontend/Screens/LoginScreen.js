@@ -269,9 +269,9 @@ const LoginScreen = ({ navigation }) => {
                         {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
-                                <View style={styles.avatarContainer}>
+                                {/* <View style={styles.avatarContainer}>
                                     <Image source={selectedAvatar} style={styles.avatar} />
-                                </View>
+                                </View> */}
                                 <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
                                  {/* Log Out Button */}
                                  <View style={styles.buttonContainer}>
@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
     },
     name: {
-        fontSize: 24,
+        fontSize: 12,
         color: '#333',
     },
     ticketSection: {

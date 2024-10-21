@@ -111,7 +111,7 @@ export default function HomeScreen() {
             await FileSystem.deleteAsync(filePath); // Delete the user data file
             console.log('User data file deleted successfully.'); // Log success
         } catch (error) {
-            console.error('Error deleting user data file:', error); // Log any errors
+            // console.error('Error deleting user data file:', error); // Log any errors
         }
         // Navigate to the index page
         router.replace('/'); // Replace with the home page
@@ -161,45 +161,46 @@ export default function HomeScreen() {
         }
     };
     const loadUserDataFromFile = async () => {
-      try {
-          const fileInfo = await FileSystem.getInfoAsync(filePath);
-          if (!fileInfo.exists) {
-              console.log('User data file does not exist.');
-              setLoading(false);
-              return;
-          }
-  
-          const fileContent = await FileSystem.readAsStringAsync(filePath);
-          const userDataFile: UserData = JSON.parse(fileContent);
-  
-          const avatarNumber = userDataFile.avatar;
-          const email = userDataFile?.email;  // Using optional chaining to safely access the email
-        if (email) {
-            setEmail(email);  // Only set email if it's a valid string
+        try {
+            const fileInfo = await FileSystem.getInfoAsync(filePath);
+            if (!fileInfo.exists) {
+                console.log('User data file does not exist.');
+                setLoading(false);
+                return;
             }
-          console.log("User data loaded:", userDataFile);  // Log the loaded user data
-          console.log("Email:", email);  // Log the email
-  
-          if (email) {
-              await fetchUserData(email);
-          } else {
-              setError('No email found in user data.');
-              setLoading(false);
-          }
-  
-          // If avatar number is valid, update the avatar state
-          if (typeof avatarNumber === 'number' && avatarNumber >= 26) {
-            setAvatar(avatarNumber - 26);  // Adjust avatar range if needed
-            console.log("Updated Avatar:", avatarNumber - 26);  // Log the updated avatar state
-        } else {
-            setAvatar(null);  // If avatar is not valid, set it to null
-            console.log("Invalid Avatar: null");
+    
+            const fileContent = await FileSystem.readAsStringAsync(filePath);
+            const userDataFile: UserData = JSON.parse(fileContent);
+    
+            const avatarNumber = userDataFile.avatar;
+            const email = userDataFile?.email;  // Using optional chaining to safely access the email
+    
+            if (email) {
+                setEmail(email);  // Only set email if it's a valid string
+                console.log("User data loaded:", userDataFile);  // Log the loaded user data
+                console.log("Email:", email);  // Log the email
+    
+                // Fetch user data and tickets using the email
+                await fetchUserData(email);
+                await fetchTickets(email);  // Pass email to fetch tickets
+            } else {
+                setError('No email found in user data.');
+                setLoading(false);
+            }
+    
+            // If avatar number is valid, update the avatar state
+            if (typeof avatarNumber === 'number' && avatarNumber >= 26) {
+                setAvatar(avatarNumber - 26);  // Adjust avatar range if needed
+                console.log("Updated Avatar:", avatarNumber - 26);  // Log the updated avatar state
+            } else {
+                setAvatar(null);  // If avatar is not valid, set it to null
+                console.log("Invalid Avatar: null");
+            }
+        } catch (error) {
+            console.error('Error loading user data from file:', error);
+            setError('Error loading user data from file.');
         }
-      } catch (error) {
-          console.error('Error loading user data from file:', error);
-          setError('Error loading user data from file.');
-      }
-  };
+    };
   
 
     const handleMoviePress = (movieId: string) => {
@@ -248,15 +249,15 @@ const handleGoHome = async () => {
             console.error('Error saving user data or navigating:', error);
         }
     };
-    const fetchTickets = async () => {
-        // console.log('Fetching tickets for:', email); // Debugging line
+    const fetchTickets = async (email) => {
         try {
             const ticketResponse = await fetch(`http://192.168.0.12:5000/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
-
+    
             if (ticketResponse.ok) {
-                // console.log('Tickets fetched successfully:', ticketData); // Debugging line
                 setTickets(ticketData); // Update state with ticket data
+            } else {
+                // console.error('Failed to fetch tickets:', ticketData);
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);
@@ -426,10 +427,7 @@ const handleGoHome = async () => {
                         {/* Profile Tab */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
-                                <View style={styles.avatarContainer}>
-                                    <Image source={selectedAvatar} style={styles.avatar} />
-                                </View>
-                                <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
+                                <Text style={styles.name}>{`Welcome to your profile`}</Text>
                                  {/* Log Out Button */}
                                  <View style={styles.buttonContainer}>
                                     <Button 
@@ -648,7 +646,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
       },
     name: {
-        fontSize: 24,
+        fontSize: 12,
         color: '#333',
     },
     avatarContainer: {
