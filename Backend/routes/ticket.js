@@ -51,4 +51,21 @@ router.get('/tickets', async (req, res) => {
     }
 });
 
+router.get('/user-tickets', async (req, res) => {
+    try {
+        // Fetch all tickets from the database without any email filter
+        const tickets = await Ticket.find();
+
+        if (tickets.length === 0) {
+            return res.status(404).json({ message: 'No tickets found.' });
+        }
+
+        // Send back the tickets
+        res.status(200).json(tickets);
+    } catch (error) {
+        console.error('Error fetching tickets:', error);
+        res.status(500).json({ message: 'An error occurred while fetching tickets.' });
+    }
+});
+
 module.exports = router;

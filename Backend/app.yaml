@@ -1,0 +1,4 @@
+runtime: nodejs20
+
+env_variables:
+  MONGODB_URI: "mongodb+srv://aryan22000:A1r3i8a0nm.@cinema.r7o73.mongodb.net/?retryWrites=true&w=majority&appName=Cinema"
