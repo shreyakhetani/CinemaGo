@@ -26,6 +26,7 @@ interface UserData {
     avatar?: string | number;
 }
 
+    
 interface Movie {
     _id: string;
     name: string;
@@ -45,6 +46,7 @@ interface Movie {
 interface TicketDisplay extends Ticket {
     selectedSeat?: string;
 }
+
 
 const API_BASE_URL = 'http://192.168.32.196:5000';
 
@@ -139,6 +141,7 @@ export default function HomeScreen() {
             setError('Error fetching user data.');
         }
     };
+  
 
     const fetchTickets = async (email: string): Promise<void> => {
         try {
