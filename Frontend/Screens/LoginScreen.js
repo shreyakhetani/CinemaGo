@@ -21,9 +21,8 @@ const LoginScreen = ({ navigation }) => {
     const [activeTab, setActiveTab] = useState('profile');
     const [isQRCodeModalVisible, setIsQRCodeModalVisible] = useState(false);
     const [selectedTicket, setSelectedTicket] = useState(null);
+    const [selectedSeat, setSelectedSeat] = useState(null);
     const [tickets, setTickets] = useState([]);
-
-    // States for EditProfile
     const [newFirstName, setNewFirstName] = useState('');
     const [newLastName, setNewLastName] = useState('');
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
@@ -36,8 +35,7 @@ const LoginScreen = ({ navigation }) => {
         }
 
         try {
-            // Login request
-            const response = await fetch('http://192.168.0.12:5000/api/auth/login', {
+            const response = await fetch('http://192.168.32.196:5000/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -50,8 +48,6 @@ const LoginScreen = ({ navigation }) => {
             if (response.ok) {
                 setUserData({ firstName: data.firstName, lastName: data.lastName, phoneNumber: data.phoneNumber });
                 setIsModalVisible(true);
-
-                // Now fetch tickets after login
                 fetchTickets();
             } else {
                 Alert.alert('Error', data.message || 'Login failed. Please try again.');
@@ -63,14 +59,12 @@ const LoginScreen = ({ navigation }) => {
     };
 
     const fetchTickets = async () => {
-        // console.log('Fetching tickets for:', email); // Debugging line
         try {
-            const ticketResponse = await fetch(`http://192.168.0.12:5000/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`http://192.168.32.196:5000/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
-                // console.log('Tickets fetched successfully:', ticketData); // Debugging line
-                setTickets(ticketData); // Update state with ticket data
+                setTickets(ticketData);
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);
@@ -78,42 +72,31 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
-
     const handleTicketPress = (ticket) => {
         setSelectedTicket(ticket);
         setIsQRCodeModalVisible(true);
     };
-    useEffect(() => {
-        // console.log("Updated tickets:", tickets); // Logs tickets after state update
-    }, [tickets]); // The effect will run whenever `tickets` state changes
 
-    // Fetch tickets when the component mounts
     useEffect(() => {
-        fetchTickets();
-    }, []);
+        if (email) {
+            fetchTickets();
+        }
+    }, [email]);
 
     const handleLogout = async () => {
-        const filePath = `${FileSystem.documentDirectory}userData.json`; // Path to the JSON file
-        try {
-            await FileSystem.deleteAsync(filePath); // Delete the user data file
-            console.log('User data file deleted successfully.'); // Log success
-        } catch (error) {
-            console.error('Error deleting user data file:', error); // Log any errors
-        }
-        // Navigate to the index page
-        router.replace('/'); // Replace with the home page
-    };
-    
-
-      const saveUserDataToFile = async (userData) => {
-        // Define the path where you want to save the JSON file
         const filePath = `${FileSystem.documentDirectory}userData.json`;
-    
-        // Convert the user data to a JSON string
-        const jsonData = JSON.stringify(userData, null, 2); // null and 2 are used for pretty formatting
-    
         try {
-            // Write the JSON data to a file
+            await FileSystem.deleteAsync(filePath);
+            router.replace('/');
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
+    const saveUserDataToFile = async (userData) => {
+        const filePath = `${FileSystem.documentDirectory}userData.json`;
+        const jsonData = JSON.stringify(userData, null, 2);
+        try {
             await FileSystem.writeAsStringAsync(filePath, jsonData);
             console.log('User data saved successfully at:', filePath);
         } catch (error) {
@@ -121,32 +104,19 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
-    
     const handleGoHome = async () => {
-        const userEmail = email; // Email from the state
-        const avatar = selectedAvatar; // Assuming the avatar is selected and stored correctly
-    
-        console.log("Email:", userEmail); // Log the correct email
-        console.log("Avatar:", avatar); // Log the correct avatar path
-        
-        // Create the data object
         const userData = {
-            email: userEmail, // Use the correct email
-            avatar: avatar, // Avatar as an image reference
+            email,
+            avatar: selectedAvatar,
         };
-    
+
         try {
-            // Save the user data and wait for the operation to complete
             await saveUserDataToFile(userData);
-            console.log('User data saved successfully');
-    
-            // Navigate to the home page after data is saved
             router.push('/');
         } catch (error) {
             console.error('Error saving user data or navigating:', error);
         }
     };
-      
 
     const handleUpdateProfile = async () => {
         const updatedData = {
@@ -157,7 +127,7 @@ const LoginScreen = ({ navigation }) => {
         };
 
         try {
-            const response = await fetch('http://192.168.0.12:5000/api/auth/update', {
+            const response = await fetch('http://192.168.32.196:5000/api/auth/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -183,43 +153,42 @@ const LoginScreen = ({ navigation }) => {
     };
 
     const handleDeleteAccount = async () => {
-        const response = await fetch('http://192.168.0.12:5000/api/auth/delete', {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-        });
+        try {
+            const response = await fetch('http://192.168.32.196:5000/api/auth/delete', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (response.ok) {
-            Alert.alert('Success', 'Account deleted successfully');
-            setIsModalVisible(false);
-            // Optionally, redirect to another screen or perform other actions
-        } else {
-            Alert.alert('Error', data.message || 'Delete failed. Please try again.');
+            if (response.ok) {
+                Alert.alert('Success', 'Account deleted successfully');
+                setIsModalVisible(false);
+                router.replace('/');
+            } else {
+                Alert.alert('Error', data.message || 'Delete failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            Alert.alert('Error', 'An error occurred. Please try again.');
         }
     };
-    const BackArrow = ({ onPress }) => {
-        return (
-          <TouchableOpacity onPress={onPress} style={styles.arrowContainer}>
-            <Image source={require('../assets/images/icons/back_arrow.png')} style={styles.arrow} />
-          </TouchableOpacity>
-        );
-      };
+
     return (
         <View style={styles.container}>
-             {/* Back button */}
-             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="black" />
                 <Text style={styles.title}>Login</Text>
             </TouchableOpacity>
+
             <TextInput
                 style={styles.input}
                 placeholder="Email"
                 value={email}
-                onChangeText={(text) => setEmail(text)}
+                onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
             />
@@ -227,7 +196,7 @@ const LoginScreen = ({ navigation }) => {
                 style={styles.input}
                 placeholder="Password"
                 value={password}
-                onChangeText={(text) => setPassword(text)}
+                onChangeText={setPassword}
                 secureTextEntry
             />
             <Button title="Login" onPress={handleLogin} />
@@ -244,7 +213,6 @@ const LoginScreen = ({ navigation }) => {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalView}>
-                        {/* Tab Navigation */}
                         <View style={styles.tabContainer}>
                             <TouchableOpacity
                                 style={[styles.tab, activeTab === 'profile' && styles.activeTab]}
@@ -265,88 +233,108 @@ const LoginScreen = ({ navigation }) => {
                                 <Text style={styles.tabText}>Edit Profile</Text>
                             </TouchableOpacity>
                         </View>
-
-                        {/* Profile Tab */}
+                        
+                        {/* Profile Tab Content */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
-                                {/* <View style={styles.avatarContainer}>
-                                    <Image source={selectedAvatar} style={styles.avatar} />
-                                </View> */}
-                                <Text style={styles.name}>{`Welcome ${userData.firstName}`}</Text>
-                                 {/* Log Out Button */}
-                                 <View style={styles.buttonContainer}>
+                                <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
+                                <View style={styles.buttonContainer}>
                                     <Button 
-                                    title="Log Out" 
-                                    onPress={handleLogout} 
-                                    color="#ff5c5c" // Custom color for Log Out button
+                                        title="Log Out" 
+                                        onPress={handleLogout} 
+                                        color="#ff5c5c"
                                     />
                                 </View>
                                 <View style={styles.buttonContainer}>
                                     <Button 
-                                    title="Go to Home" 
-                                    onPress={handleGoHome} 
-                                    color="#4a90e2" // Custom color for Home button
+                                        title="Go to Home" 
+                                        onPress={handleGoHome} 
+                                        color="#4a90e2"
                                     />
-                                </View> 
+                                </View>
                             </View>
-                            
                         )}
-                        {/* Tickets Tab */}
+
                         {activeTab === 'tickets' && (
-                    <ScrollView style={styles.ticketSection}>
-                        {tickets.length > 0 ? (
-                        tickets.map((ticket, index) => (
-                            <View key={index} style={styles.ticketItem}>
-                                <Text style={styles.ticketItemText}>Movie: <Text style={styles.ticketDetail}>{ticket.movieName}</Text></Text>
-                                <Text style={styles.ticketItemText}>Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text></Text>
-                                <Text style={styles.ticketItemText}>Showtime: <Text style={styles.ticketDetail}>{new Date(ticket.showtime).toLocaleString()}</Text></Text>
-                                <Text style={styles.ticketItemText}>Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text></Text>
-                                <Text style={styles.ticketItemText}>Language: <Text style={styles.ticketDetail}>{ticket.language}</Text></Text>
-                                <Text style={styles.ticketItemText}>Seats: <Text style={styles.ticketDetail}>{ticket.seat}</Text></Text>
+                            <ScrollView style={styles.ticketSection}>
+                                {tickets.length > 0 ? (
+                                    tickets.map((ticket, index) => {
+                                        // Split compound seats into individual seats and sort them
+                                        const seatPairs = ticket.seat.split(', Row ');
+                                        let individualSeats = seatPairs.map(seatPair => {
+                                            if (seatPair.startsWith('Row ')) {
+                                                return seatPair;
+                                            }
+                                            return `Row ${seatPair}`;
+                                        });
 
-                                {/* Generate QR Code for each seat */}
-                                <TouchableOpacity
-                                    style={styles.ticketButton}
-                                    onPress={() => handleTicketPress(ticket)}
-                                >
-                                    <Text style={styles.ticketButtonText}>Show QR Code</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={styles.noTicketsText}>You don't have any tickets.</Text>
-                    )}
-                    </ScrollView>
-                )}
+                                        // Sort seats by row and column numbers
+                                        individualSeats.sort((a, b) => {
+                                            const aMatch = a.match(/Row (\d+), Col (\d+)/);
+                                            const bMatch = b.match(/Row (\d+), Col (\d+)/);
+                                            
+                                            if (aMatch && bMatch) {
+                                                const [, aRow, aCol] = aMatch.map(Number);
+                                                const [, bRow, bCol] = bMatch.map(Number);
+                                                
+                                                // First compare rows
+                                                if (aRow !== bRow) {
+                                                    return aRow - bRow;
+                                                }
+                                                // If rows are same, compare columns
+                                                return aCol - bCol;
+                                            }
+                                            return 0;
+                                        });
+                                                                        
+                                        return (
+                                            <View key={index} style={styles.ticketItem}>
+                                                <Text style={styles.ticketItemText}>
+                                                    Movie: <Text style={styles.ticketDetail}>{ticket.movieName}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Showtime: <Text style={styles.ticketDetail}>
+                                                        {new Date(ticket.showtime).toLocaleString('en-US', {
+                                                            timeZone: 'Europe/Helsinki',
+                                                            hour12: false
+                                                        })}
+                                                    </Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Language: <Text style={styles.ticketDetail}>{ticket.language}</Text>
+                                                </Text>
+                                                
+                                                {individualSeats.map((seat, seatIndex) => (
+                                                    <View key={seatIndex} style={styles.seatContainer}>
+                                                        <Text style={styles.ticketItemText}>
+                                                            Seat: <Text style={styles.ticketDetail}>{seat}</Text>
+                                                        </Text>
+                                                        <TouchableOpacity
+                                                            style={styles.ticketButton}
+                                                            onPress={() => handleTicketPress({
+                                                                ...ticket,
+                                                                seat: seat
+                                                            })}
+                                                        >
+                                                            <Text style={styles.ticketButtonText}>Show QR Code for {seat}</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        );
+                                    })
+                                ) : (
+                                    <Text style={styles.noTicketsText}>You don't have any tickets.</Text>
+                                )}
+                            </ScrollView>
+                        )}
 
-                {/* QR Code Modal */}
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={isQRCodeModalVisible}
-                    onRequestClose={() => setIsQRCodeModalVisible(false)}
-                >
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalView}>
-                            {selectedTicket && (
-                                <>
-                                    <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
-                                    <QRCode
-                                        value={`Movie: ${selectedTicket.movieName}\nHall: ${selectedTicket.hallName}\nShowtime: ${new Date(selectedTicket.showtime).toLocaleString()}\nSeats: ${selectedTicket.seat}`}
-                                        size={200}
-                                    />
-                                    <Pressable
-                                        style={styles.closeModalButton}
-                                        onPress={() => setIsQRCodeModalVisible(false)}
-                                    >
-                                        <Ionicons name="close" size={24} color="black" />
-                                    </Pressable>
-                                </>
-                            )}
-                        </View>
-                    </View>
-                </Modal>
-                        {/* EditProfile Tab */}
                         {activeTab === 'EditProfile' && (
                             <View style={styles.EditProfileSection}>
                                 <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
@@ -386,6 +374,43 @@ const LoginScreen = ({ navigation }) => {
                     </View>
                 </View>
             </Modal>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isQRCodeModalVisible}
+                onRequestClose={() => setIsQRCodeModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        {selectedTicket && (
+                            <>
+                                <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
+                                <QRCode
+                                    value={JSON.stringify({
+                                        movieName: selectedTicket.movieName,
+                                        hallName: selectedTicket.hallName,
+                                        showtime: new Date(selectedTicket.showtime).toLocaleString('en-US', {
+                                            timeZone: 'Europe/Helsinki',
+                                            hour12: false
+                                        }),
+                                        duration: selectedTicket.duration,
+                                        language: selectedTicket.language,
+                                        seat: selectedTicket.seat
+                                    })}
+                                    size={200}
+                                />
+                                <Pressable
+                                    style={styles.closeModalButton}
+                                    onPress={() => setIsQRCodeModalVisible(false)}
+                                >
+                                    <Ionicons name="close" size={24} color="black" />
+                                </Pressable>
+                            </>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
@@ -394,21 +419,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         justifyContent: 'center',
-        // alignItems: 'center',
         padding: 20,
         backgroundColor: '#f5f5f5',
     },
     backButton: {
-        position: 'absolute',  // Absolute positioning
-        top: 0,               // Adjust this to control vertical distance from the top
-        left: 10,              // Adjust this to control horizontal distance from the left
-        flexDirection: 'row',  // Align items in a row (horizontally)
-        alignItems: 'center',  // Vertically center items
+        position: 'absolute',
+        top: 0,
+        left: 10,
+        flexDirection: 'row',
+        alignItems: 'center',
         padding: 10,
     },
     title: {
         fontSize: 18,
-        marginLeft: 8,       // Add space between the arrow and the text
+        marginLeft: 8,
         color: 'black',
     },
     input: {
@@ -418,6 +442,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         marginBottom: 12,
         paddingHorizontal: 10,
+        backgroundColor: '#fff',
     },
     link: {
         color: '#6200ea',
@@ -432,12 +457,12 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         marginBottom: 20,
-        width: '80%', // Button width relative to screen
+        width: '80%',
         borderRadius: 10,
         overflow: 'hidden',
-      },
+    },
     modalView: {
-        backgroundColor: '#f4f4f4', // Lighter background for better visibility
+        backgroundColor: '#f4f4f4',
         padding: 30,
         borderRadius: 20,
         width: '80%',
@@ -447,12 +472,13 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5, // Adds shadow effect for depth
+        elevation: 5,
     },
     tabContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         marginBottom: 20,
+        width: '100%',
     },
     tab: {
         padding: 10,
@@ -468,6 +494,7 @@ const styles = StyleSheet.create({
     profileContainer: {
         alignItems: 'center',
         marginBottom: 20,
+        width: '100%',
     },
     avatarContainer: {
         marginBottom: 10,
@@ -480,74 +507,85 @@ const styles = StyleSheet.create({
     name: {
         fontSize: 20,
         color: '#333',
+        marginBottom: 20,
     },
     ticketSection: {
-        backgroundColor: '#1c1c1c', // Dark background for a cinema feel
+        backgroundColor: '#1c1c1c',
         padding: 20,
         borderRadius: 10,
+        width: '100%',
+        maxHeight: 400,
     },
     ticketItem: {
-        backgroundColor: '#222', // Dark background to keep the cinema theme
+        backgroundColor: '#222',
         padding: 15,
         marginBottom: 15,
-        borderRadius: 15, // Rounded corners for a modern look
+        borderRadius: 15,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.15,
         shadowRadius: 8,
-        elevation: 6, // Adds depth to the card
-        alignItems: 'flex-start', // Align text to the left
+        elevation: 6,
+        alignItems: 'flex-start',
         width: '100%',
         minHeight: 120,
         borderWidth: 1,
-        borderColor: '#444', // A subtle border to separate each ticket
+        borderColor: '#444',
     },
-    ticketText: {
-        color: '#f0f0f0', // Light color text for better contrast
+    seatContainer: {
+        borderTopWidth: 1,
+        borderTopColor: '#444',
+        paddingTop: 10,
+        marginTop: 10,
+        width: '100%',
+    },
+    ticketItemText: {
+        color: '#f0f0f0',
         fontSize: 16,
         marginBottom: 5,
+        fontWeight: '600',
+    },
+    ticketDetail: {
+        color: '#ffcc00',
+        fontSize: 16,
+        fontWeight: '500',
     },
     ticketButton: {
-        backgroundColor: '#f57c00', // Cinema-inspired orange button color
+        backgroundColor: '#f57c00',
         paddingVertical: 8,
         paddingHorizontal: 15,
         borderRadius: 8,
         marginTop: 10,
-        alignSelf: 'center', // Center the button
-        width: 'auto',
-    },
-    ticketItemText: {
-        color: '#f0f0f0', // Light-colored text for readability
-        fontSize: 16,
-        marginBottom: 5,
-        fontWeight: '600', // Slightly bolder text for labels
-    },
-    ticketDetail: {
-        color: '#ffcc00', // Bright yellow/orange for the details to stand out
-        fontSize: 16,
-        fontWeight: '500', // Slightly lighter text for the ticket details
+        alignSelf: 'center',
     },
     ticketButtonText: {
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
-        textAlign: 'center', // Ensure text is centered in button
+        textAlign: 'center',
+    },
+    noTicketsText: {
+        color: '#f0f0f0',
+        fontSize: 16,
+        marginBottom: 20,
+        fontWeight: '600',
+        textAlign: 'center',
     },
     EditProfileSection: {
+        width: '100%',
         marginBottom: 20,
-    },
-    EditProfileTitle: {
-        fontSize: 18,
-        marginBottom: 10,
     },
     avatarSelectionTitle: {
         fontSize: 16,
         marginBottom: 10,
+        color: '#333',
+        textAlign: 'center',
     },
     avatarOptionsContainer: {
         flexDirection: 'row',
         marginBottom: 20,
         justifyContent: 'space-around',
+        width: '100%',
     },
     avatarOption: {
         padding: 5,
@@ -573,42 +611,25 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
     },
-    ticketButton: {
-        backgroundColor: '#6200ea', // Button color
-        padding: 10,
-        borderRadius: 5,
-        marginTop: 10,
-    },
-    ticketButtonText: {
-        color: '#fff',
-        textAlign: 'center',
-    },
     qrCodeTitle: {
-        color: '#ff8c00', // Cinema-style orange for the title
+        color: '#ff8c00',
         fontSize: 22,
         fontWeight: 'bold',
         marginBottom: 20,
     },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.8)', // Semi-transparent black background
-    },
-    modalView: {
-        backgroundColor: 'white',
-        padding: 30,
-        borderRadius: 20,
-        width: '80%',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
     closeModalButton: {
-        backgroundColor: '#ff4d4d', // Close button in red for attention
+        backgroundColor: '#ff4d4d',
         padding: 10,
         borderRadius: 50,
         marginTop: 20,
     },
+    seatContainer: {
+        borderTopWidth: 1,
+        borderTopColor: '#444',
+        paddingTop: 10,
+        marginTop: 10,
+        width: '100%',
+    }
 });
 
 export default LoginScreen;

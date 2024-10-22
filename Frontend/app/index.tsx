@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Image, TextInput,StyleSheet, View, ScrollView, Text, TouchableOpacity,Modal,Pressable,Alert,Button } from 'react-native';
+import { Image, TextInput, StyleSheet, View, ScrollView, Text, TouchableOpacity, Modal, Pressable, Alert, Button } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
@@ -8,13 +8,45 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
+// Define interfaces for type safety
+interface Ticket {
+    movieName: string;
+    hallName: string;
+    showtime: string;
+    duration: string;
+    language: string;
+    seat: string;
+}
 
-// Define the type for user data
 interface UserData {
-    email?: string;
-    firstName?: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string;
     avatar?: string | number;
 }
+
+    
+interface Movie {
+    _id: string;
+    name: string;
+    premiere: string;
+    distributor: string;
+    roles: string[];
+    language: string;
+    cc: string;
+    age: number;
+    imageName: string;
+    duration: string;
+    director: string;
+    genre: string;
+    description: string;
+}
+
+interface TicketDisplay extends Ticket {
+    selectedSeat?: string;
+}
+
 
 const API_BASE_URL = 'http://192.168.32.196:5000';
 
@@ -33,39 +65,17 @@ const avatarOptions = [
 ];
 
 const getImageSource = (imageName: string): any => {
-    const baseName = imageName.split('.')[0]; // Remove file extension
-
-    if (images[baseName]) {
-        return images[baseName];
-    } else {
-        console.warn(`Image not found: ${imageName}`);
-        return images['splash'];
-    }
+    const baseName = imageName.split('.')[0];
+    return images[baseName] || images['splash'];
 };
 
-const getTodayDate = () => {
+const getTodayDate = (): string => {
     const today = new Date();
     const year = today.getFullYear();
     const month = (today.getMonth() + 1).toString().padStart(2, '0');
     const day = today.getDate().toString().padStart(2, '0');
     return `TODAY ${day}.${month}`;
 };
-
-export interface Movie {
-    _id: string;
-    name: string;
-    premiere: string;
-    distributor: string;
-    roles: string[];
-    language: string;
-    cc: string;
-    age: number;
-    imageName: string;
-    duration: string;
-    director: string;
-    genre: string;
-    description: string;
-}
 
 export default function HomeScreen() {
     const router = useRouter();
@@ -74,26 +84,30 @@ export default function HomeScreen() {
     const [firstName, setFirstName] = useState<string | null>(null);
     const [avatar, setAvatar] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isModalVisible, setIsModalVisible] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<string>('profile');
+    const [selectedAvatar, setSelectedAvatar] = useState<any>(avatarOptions[0]);
+    const [userData, setUserData] = useState<UserData>({
+        email: '',
+        firstName: '',
+        lastName: '',
+        phoneNumber: ''
+    });
+    const [email, setEmail] = useState<string>('');
+    const [tickets, setTickets] = useState<Ticket[]>([]);
+    const [selectedTicket, setSelectedTicket] = useState<TicketDisplay | null>(null);
+    const [isQRCodeModalVisible, setIsQRCodeModalVisible] = useState<boolean>(false);
+    const [newFirstName, setNewFirstName] = useState<string>('');
+    const [newLastName, setNewLastName] = useState<string>('');
+    const [newPhoneNumber, setNewPhoneNumber] = useState<string>('');
+    
     const todayDate = getTodayDate();
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [activeTab, setActiveTab] = useState('profile');
-    const [selectedAvatar, setSelectedAvatar] = useState(avatarOptions[0]);
-    const [userData, setUserData] = useState({ firstName: '', lastName: '', phoneNumber: '' });
-    const [email, setEmail] = useState('');
-    const [tickets, setTickets] = useState([]);
-    const [selectedTicket, setSelectedTicket] = useState(null);
-    const [isQRCodeModalVisible, setIsQRCodeModalVisible] = useState(false);
-    // States for EditProfile
-    const [newFirstName, setNewFirstName] = useState('');
-    const [newLastName, setNewLastName] = useState('');
-    const [newPhoneNumber, setNewPhoneNumber] = useState('');
-    //Files for user data
     const filePath = `${FileSystem.documentDirectory}userData.json`;
 
     useEffect(() => {
         const fetchMovies = async () => {
             try {
-                const response = await axios.get(`${API_BASE_URL}/api/movies/movies`);
+                const response = await axios.get<{ movies: Movie[] }>(`${API_BASE_URL}/api/movies/movies`);
                 setMovies(response.data.movies);
             } catch (error) {
                 console.error('Error fetching movies:', error);
@@ -105,19 +119,8 @@ export default function HomeScreen() {
         fetchMovies();
         loadUserDataFromFile();
     }, []);
-    const handleLogout = async () => {
-        const filePath = `${FileSystem.documentDirectory}userData.json`; // Path to the JSON file
-        try {
-            await FileSystem.deleteAsync(filePath); // Delete the user data file
-            console.log('User data file deleted successfully.'); // Log success
-        } catch (error) {
-            // console.error('Error deleting user data file:', error); // Log any errors
-        }
-        // Navigate to the index page
-        router.replace('/'); // Replace with the home page
-    };
 
-    const fetchUserData = async () => {
+    const fetchUserData = async (email: string): Promise<void> => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/user?email=${email}`);
             if (!response.ok) {
@@ -130,134 +133,23 @@ export default function HomeScreen() {
             }
             const data = await response.json();
             if (data && data.firstName && data.lastName && data.phoneNumber) {
-                console.log('Fetched user data:', data);
                 setUserData(data);
             } else {
                 setError('No user data available.');
             }
         } catch (error) {
-            // console.error('Error fetching user data:', error);
             setError('Error fetching user data.');
-        }
-    };
-    
-    const handleDeleteAccount = async () => {
-        const response = await fetch(`${API_BASE_URL}/api/auth/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ email }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            Alert.alert('Success', 'Account deleted successfully');
-            setIsModalVisible(false);
-            // Optionally, redirect to another screen or perform other actions
-        } else {
-            Alert.alert('Error', data.message || 'Delete failed. Please try again.');
-        }
-    };
-    const loadUserDataFromFile = async () => {
-        try {
-            const fileInfo = await FileSystem.getInfoAsync(filePath);
-            if (!fileInfo.exists) {
-                console.log('User data file does not exist.');
-                setLoading(false);
-                return;
-            }
-    
-            const fileContent = await FileSystem.readAsStringAsync(filePath);
-            const userDataFile: UserData = JSON.parse(fileContent);
-    
-            const avatarNumber = userDataFile.avatar;
-            const email = userDataFile?.email;  // Using optional chaining to safely access the email
-    
-            if (email) {
-                setEmail(email);  // Only set email if it's a valid string
-                console.log("User data loaded:", userDataFile);  // Log the loaded user data
-                console.log("Email:", email);  // Log the email
-    
-                // Fetch user data and tickets using the email
-                await fetchUserData(email);
-                await fetchTickets(email);  // Pass email to fetch tickets
-            } else {
-                setError('No email found in user data.');
-                setLoading(false);
-            }
-    
-            // If avatar number is valid, update the avatar state
-            if (typeof avatarNumber === 'number' && avatarNumber >= 26) {
-                setAvatar(avatarNumber - 26);  // Adjust avatar range if needed
-                console.log("Updated Avatar:", avatarNumber - 26);  // Log the updated avatar state
-            } else {
-                setAvatar(null);  // If avatar is not valid, set it to null
-                console.log("Invalid Avatar: null");
-            }
-        } catch (error) {
-            console.error('Error loading user data from file:', error);
-            setError('Error loading user data from file.');
         }
     };
   
 
-    const handleMoviePress = (movieId: string) => {
-        router.push({
-            pathname: '/MovieDetail',
-            params: { id: movieId },
-        });
-    };
-
-    const saveUserDataToFile = async (userData) => {
-        // Define the path where you want to save the JSON file
-        const filePath = `${FileSystem.documentDirectory}userData.json`;
-    
-        // Convert the user data to a JSON string
-        const jsonData = JSON.stringify(userData, null, 2); // null and 2 are used for pretty formatting
-    
+    const fetchTickets = async (email: string): Promise<void> => {
         try {
-            // Write the JSON data to a file
-            await FileSystem.writeAsStringAsync(filePath, jsonData);
-            console.log('User data saved successfully at:', filePath);
-        } catch (error) {
-            console.error('Error writing to file', error);
-        }
-    };
-const handleGoHome = async () => {
-        const userEmail = email; // Email from the state
-        const avatar = selectedAvatar; // Assuming the avatar is selected and stored correctly
-    
-        console.log("Email:", userEmail); // Log the correct email
-        console.log("Avatar:", avatar); // Log the correct avatar path
-        
-        // Create the data object
-        const userData = {
-            email: userEmail, // Use the correct email
-            avatar: avatar, // Avatar as an image reference
-        };
-    
-        try {
-            // Save the user data and wait for the operation to complete
-            await saveUserDataToFile(userData);
-            console.log('User data saved successfully');
-    
-            // Navigate to the home page after data is saved
-            router.push('/');
-        } catch (error) {
-            console.error('Error saving user data or navigating:', error);
-        }
-    };
-    const fetchTickets = async (email) => {
-        try {
-            const ticketResponse = await fetch(`http://192.168.0.12:5000/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`${API_BASE_URL}/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
-    
+
             if (ticketResponse.ok) {
-                setTickets(ticketData); // Update state with ticket data
-            } else {
-                // console.error('Failed to fetch tickets:', ticketData);
+                setTickets(ticketData);
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);
@@ -265,21 +157,85 @@ const handleGoHome = async () => {
         }
     };
 
-    const handleTicketPress = (ticket) => {
-        setSelectedTicket(ticket);
+    const handleLogout = async (): Promise<void> => {
+        try {
+            await FileSystem.deleteAsync(filePath);
+            router.replace('/');
+        } catch (error) {
+            console.error('Error during logout:', error);
+        }
+    };
+
+    const loadUserDataFromFile = async (): Promise<void> => {
+        try {
+            const fileInfo = await FileSystem.getInfoAsync(filePath);
+            if (!fileInfo.exists) {
+                setLoading(false);
+                return;
+            }
+
+            const fileContent = await FileSystem.readAsStringAsync(filePath);
+            const userDataFile: UserData = JSON.parse(fileContent);
+
+            if (userDataFile.email) {
+                setEmail(userDataFile.email);
+                await fetchUserData(userDataFile.email);
+                await fetchTickets(userDataFile.email);
+            }
+
+            if (typeof userDataFile.avatar === 'number' && userDataFile.avatar >= 26) {
+                setAvatar(userDataFile.avatar - 26);
+            }
+            
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            setError('Error loading user data from file.');
+        }
+    };
+
+    const saveUserDataToFile = async (userData: UserData): Promise<void> => {
+        try {
+            const jsonData = JSON.stringify(userData, null, 2);
+            await FileSystem.writeAsStringAsync(filePath, jsonData);
+        } catch (error) {
+            console.error('Error saving user data:', error);
+        }
+    };
+
+    const handleGoHome = async (): Promise<void> => {
+        const userData: UserData = {
+            email,
+            firstName: '',
+            lastName: '',
+            phoneNumber: '',
+            avatar: selectedAvatar,
+        };
+
+        try {
+            await saveUserDataToFile(userData);
+            router.push('/');
+        } catch (error) {
+            console.error('Error navigating home:', error);
+        }
+    };
+
+    const handleMoviePress = (movieId: string): void => {
+        router.push({
+            pathname: '/MovieDetail',
+            params: { id: movieId },
+        });
+    };
+
+    const handleTicketPress = (ticket: Ticket): void => {
+        setSelectedTicket({
+            ...ticket,
+            seat: ticket.seat
+        });
         setIsQRCodeModalVisible(true);
     };
-    useEffect(() => {
-        // console.log("Updated tickets:", tickets); // Logs tickets after state update
-    }, [tickets]); // The effect will run whenever `tickets` state changes
 
-    // Fetch tickets when the component mounts
-    useEffect(() => {
-        fetchTickets();
-    }, []);
-
-    const handleUpdateProfile = async () => {
-        const updatedData = {
+    const handleUpdateProfile = async (): Promise<void> => {
+        const updatedData: UserData = {
             email,
             firstName: newFirstName || userData.firstName,
             lastName: newLastName || userData.lastName,
@@ -287,7 +243,7 @@ const handleGoHome = async () => {
         };
 
         try {
-            const response = await fetch('http://192.168.0.12:5000/api/auth/update', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/update`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -312,19 +268,42 @@ const handleGoHome = async () => {
         }
     };
 
+    const handleDeleteAccount = async (): Promise<void> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/delete`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                Alert.alert('Success', 'Account deleted successfully');
+                setIsModalVisible(false);
+                router.replace('/');
+            } else {
+                Alert.alert('Error', data.message || 'Delete failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            Alert.alert('Error', 'An error occurred. Please try again.');
+        }
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.scrollView}>
-            {/* Header for CinemaGo */}
+            {/* Header */}
             <View style={styles.header}>
                 <Image source={require('../assets/images/CinemaGo10.jpg')} style={styles.headerImage} resizeMode="contain" />
                 <TouchableOpacity 
                     style={styles.circleButton} 
                     onPress={() => {
                         if (avatar === null) {
-                            // Navigate to signup/login page
                             router.push('/Signup_Login');
                         } else {
-                            // Open the modal
                             setIsModalVisible(true);
                         }
                     }}
@@ -335,20 +314,21 @@ const handleGoHome = async () => {
                         <Image source={require('../assets/images/icons/human_Icon.jpg')} style={styles.avatarStyle} />
                     )}
                 </TouchableOpacity>
-                <Text style={[styles.headerText]}>
+                <Text style={styles.headerText}>
                     After his home is conquered by the tyrannical emperors who now lead Rome, Lucius is forced to enter the Colosseum and must look to his past to find strength to return the glory of Rome to its people
                 </Text>
-                <Text style={[styles.headerText2]}>Gladiator II Release Day: 15th October</Text>
+                <Text style={styles.headerText2}>Gladiator II Release Day: 15th October</Text>
             </View>
-    
+
+            {/* Movie List */}
             <View style={styles.container}>
                 {movies.map((movie) => (
                     <View key={movie._id} style={styles.movieContainer}>
                         <View style={styles.contentRow}>
                             <Image source={getImageSource(movie.imageName)} style={styles.movieImage} resizeMode="cover" />
                             <View style={styles.content}>
-                                <Text style={[styles.title]}>{movie.name}</Text>
-                                <Text style={[styles.day]}>{todayDate}</Text>
+                                <Text style={styles.title}>{movie.name}</Text>
+                                <Text style={styles.day}>{todayDate}</Text>
                                 <View style={styles.iconContainer}>
                                     <View style={styles.subtitle}>
                                         <Svg
@@ -390,10 +370,10 @@ const handleGoHome = async () => {
                     </View>
                 ))}
             </View>
-    
+
             <Footer />
-    
-            {/* Modal */}
+
+            {/* Profile Modal */}
             <Modal
                 animationType="fade"
                 transparent={true}
@@ -424,84 +404,109 @@ const handleGoHome = async () => {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Profile Tab */}
+                        {/* Profile Tab Content */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
-                                <Text style={styles.name}>{`Welcome to your profile`}</Text>
-                                 {/* Log Out Button */}
-                                 <View style={styles.buttonContainer}>
+                                <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
+                                <View style={styles.buttonContainer}>
                                     <Button 
-                                    title="Log Out" 
-                                    onPress={handleLogout} 
-                                    color="#ff5c5c" // Custom color for Log Out button
+                                        title="Log Out" 
+                                        onPress={handleLogout} 
+                                        color="#ff5c5c"
                                     />
                                 </View>
                                 <View style={styles.buttonContainer}>
                                     <Button 
-                                    title="Go to Home" 
-                                    onPress={handleGoHome} 
-                                    color="#4a90e2" // Custom color for Home button
+                                        title="Go to Home" 
+                                        onPress={handleGoHome} 
+                                        color="#4a90e2"
                                     />
-                                </View> 
+                                </View>
                             </View>
-                            
                         )}
-                        {/* Tickets Tab */}
+
+                        {/* Tickets Tab Content */}
                         {activeTab === 'tickets' && (
-                    <ScrollView style={styles.ticketSection}>
-                        {tickets.length > 0 ? (
-                        tickets.map((ticket, index) => (
-                            <View key={index} style={styles.ticketItem}>
-                                <Text style={styles.ticketItemText}>Movie: <Text style={styles.ticketDetail}>{ticket.movieName}</Text></Text>
-                                <Text style={styles.ticketItemText}>Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text></Text>
-                                <Text style={styles.ticketItemText}>Showtime: <Text style={styles.ticketDetail}>{new Date(ticket.showtime).toLocaleString()}</Text></Text>
-                                <Text style={styles.ticketItemText}>Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text></Text>
-                                <Text style={styles.ticketItemText}>Language: <Text style={styles.ticketDetail}>{ticket.language}</Text></Text>
-                                <Text style={styles.ticketItemText}>Seats: <Text style={styles.ticketDetail}>{ticket.seat}</Text></Text>
+                            <ScrollView style={styles.ticketSection}>
+                                {tickets.length > 0 ? (
+                                    tickets.map((ticket, index) => {
+                                        // Split compound seats into individual seats and sort them
+                                        const seatPairs = ticket.seat.split(', Row ');
+                                        let individualSeats = seatPairs.map(seatPair => {
+                                            if (seatPair.startsWith('Row ')) {
+                                                return seatPair;
+                                            }
+                                            return `Row ${seatPair}`;
+                                        });
 
-                                {/* Generate QR Code for each seat */}
-                                <TouchableOpacity
-                                    style={styles.ticketButton}
-                                    onPress={() => handleTicketPress(ticket)}
-                                >
-                                    <Text style={styles.ticketButtonText}>Show QR Code</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ))
-                    ) : (
-                        <Text style={styles.noTicketsText}>You don't have any tickets.</Text>
-                    )}
-                    </ScrollView>
-                )}
+                                        // Sort seats by row and column numbers
+                                        individualSeats.sort((a, b) => {
+                                            const aMatch = a.match(/Row (\d+), Col (\d+)/);
+                                            const bMatch = b.match(/Row (\d+), Col (\d+)/);
+                                            
+                                            if (aMatch && bMatch) {
+                                                const [, aRow, aCol] = aMatch.map(Number);
+                                                const [, bRow, bCol] = bMatch.map(Number);
+                                                
+                                                // First compare rows
+                                                if (aRow !== bRow) {
+                                                    return aRow - bRow;
+                                                }
+                                                // If rows are same, compare columns
+                                                return aCol - bCol;
+                                            }
+                                            return 0;
+                                        });
+                                        
+                                        return (
+                                            <View key={index} style={styles.ticketItem}>
+                                                <Text style={styles.ticketItemText}>
+                                                    Movie: <Text style={styles.ticketDetail}>{ticket.movieName}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Showtime: <Text style={styles.ticketDetail}>
+                                                        {new Date(ticket.showtime).toLocaleString('en-US', {
+                                                            timeZone: 'Europe/Helsinki',
+                                                            hour12: false
+                                                        })}
+                                                    </Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text>
+                                                </Text>
+                                                <Text style={styles.ticketItemText}>
+                                                    Language: <Text style={styles.ticketDetail}>{ticket.language}</Text>
+                                                </Text>
+                                                
+                                                {individualSeats.map((seat, seatIndex) => (
+                                                    <View key={seatIndex} style={styles.seatContainer}>
+                                                        <Text style={styles.ticketItemText}>
+                                                            Seat: <Text style={styles.ticketDetail}>{seat}</Text>
+                                                        </Text>
+                                                        <TouchableOpacity
+                                                            style={styles.ticketButton}
+                                                            onPress={() => handleTicketPress({
+                                                                ...ticket,
+                                                                seat: seat
+                                                            })}
+                                                        >
+                                                            <Text style={styles.ticketButtonText}>Show QR Code for {seat}</Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                ))}
+                                            </View>
+                                        );
+                                    })
+                                ) : (
+                                    <Text style={styles.noTicketsText}>You don't have any tickets.</Text>
+                                )}
+                            </ScrollView>
+                        )}
 
-                {/* QR Code Modal */}
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={isQRCodeModalVisible}
-                    onRequestClose={() => setIsQRCodeModalVisible(false)}
-                >
-                    <View style={styles.modalContainer}>
-                        <View style={styles.modalView}>
-                            {selectedTicket && (
-                                <>
-                                    <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
-                                    <QRCode
-                                        value={`Movie: ${selectedTicket.movieName}\nHall: ${selectedTicket.hallName}\nShowtime: ${new Date(selectedTicket.showtime).toLocaleString()}\nSeats: ${selectedTicket.seat}`}
-                                        size={200}
-                                    />
-                                    <Pressable
-                                        style={styles.closeModalButton}
-                                        onPress={() => setIsQRCodeModalVisible(false)}
-                                    >
-                                        <Ionicons name="close" size={24} color="black" />
-                                    </Pressable>
-                                </>
-                            )}
-                        </View>
-                    </View>
-                </Modal>
-                        {/* EditProfile Tab */}
+                        {/* EditProfile Tab Content */}
                         {activeTab === 'EditProfile' && (
                             <View style={styles.EditProfileSection}>
                                 <Text style={styles.avatarSelectionTitle}>Select Avatar</Text>
@@ -541,132 +546,49 @@ const handleGoHome = async () => {
                     </View>
                 </View>
             </Modal>
+
+            {/* QR Code Modal */}
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={isQRCodeModalVisible}
+                onRequestClose={() => setIsQRCodeModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalView}>
+                        {selectedTicket && (
+                            <>
+                                <Text style={styles.qrCodeTitle}>Your Ticket QR Code</Text>
+                                <QRCode
+                                    value={JSON.stringify({
+                                        movieName: selectedTicket.movieName,
+                                        hallName: selectedTicket.hallName,
+                                        showtime: new Date(selectedTicket.showtime).toLocaleString('en-US', {
+                                            timeZone: 'Europe/Helsinki',
+                                            hour12: false
+                                        }),
+                                        duration: selectedTicket.duration,
+                                        language: selectedTicket.language,
+                                        seat: selectedTicket.seat
+                                    })}
+                                    size={200}
+                                />
+                                <Pressable
+                                    style={styles.closeModalButton}
+                                    onPress={() => setIsQRCodeModalVisible(false)}
+                                >
+                                    <Ionicons name="close" size={24} color="black" />
+                                </Pressable>
+                            </>
+                        )}
+                    </View>
+                </View>
+            </Modal>
         </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
-    ticketDetail: {
-        color: '#ffcc00', // Bright yellow/orange for the details to stand out
-        fontSize: 16,
-        fontWeight: '500', // Slightly lighter text for the ticket details
-    },
-    avatarOptionImage: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-    },
-    selectedAvatarOption: {
-        borderColor: '#6200ea',
-    },
-    input: {
-        height: 40,
-        borderColor: '#6200ea',
-        borderWidth: 1,
-        borderRadius: 8,
-        marginBottom: 12,
-        paddingHorizontal: 10,
-    },
-    avatarOptionsContainer: {
-        flexDirection: 'row',
-        marginBottom: 20,
-        justifyContent: 'space-around',
-    },
-    avatarOption: {
-        padding: 5,
-        borderWidth: 2,
-        borderRadius: 50,
-        borderColor: 'transparent',
-    },
-    avatarSelectionTitle: {
-        fontSize: 16,
-        marginBottom: 10,
-    },
-    EditProfileSection: {
-        marginBottom: 20,
-    },
-    qrCodeTitle: {
-        color: '#ff8c00', // Cinema-style orange for the title
-        fontSize: 22,
-        fontWeight: 'bold',
-        marginBottom: 20,
-    },
-    noTicketsText:{
-        color: '#f0f0f0', // Light-colored text for readability
-        fontSize: 16,
-        marginBottom: 20,
-        fontWeight: '600', // Slightly bolder text for labels
-    },
-    ticketButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-        textAlign: 'center', // Ensure text is centered in button
-    },
-    ticketButton: {
-        backgroundColor: '#f57c00', // Cinema-inspired orange button color
-        paddingVertical: 8,
-        paddingHorizontal: 15,
-        borderRadius: 8,
-        marginTop: 10,
-        alignSelf: 'center', // Center the button
-        width: 'auto',
-    },
-    ticketItemText: {
-        color: '#f0f0f0', // Light-colored text for readability
-        fontSize: 16,
-        marginBottom: 5,
-        fontWeight: '600', // Slightly bolder text for labels
-    },
-    ticketItem: {
-        backgroundColor: '#222', // Dark background to keep the cinema theme
-        padding: 15,
-        marginBottom: 15,
-        borderRadius: 15, // Rounded corners for a modern look
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 8,
-        elevation: 6, // Adds depth to the card
-        alignItems: 'flex-start', // Align text to the left
-        width: '100%',
-        minHeight: 120,
-        borderWidth: 1,
-        borderColor: '#444', // A subtle border to separate each ticket
-    },
-    ticketSection: {
-        backgroundColor: '#1c1c1c', // Dark background for a cinema feel
-        padding: 20,
-        borderRadius: 10,
-    },
-    buttonContainer: {
-        marginBottom: 20,
-        width: '80%', // Button width relative to screen
-        borderRadius: 10,
-        overflow: 'hidden',
-      },
-    name: {
-        fontSize: 20,
-        color: '#333',
-    },
-    avatarContainer: {
-        marginBottom: 10,
-    },
-    profileContainer: {
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    tabText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    activeTab: {
-        borderBottomWidth: 2,
-        borderBottomColor: '#6200ea',
-    },
-    tab: {
-        padding: 10,
-    },
     scrollView: {
         flexGrow: 1,
         backgroundColor: '#000',
@@ -678,148 +600,8 @@ const styles = StyleSheet.create({
         padding: 10,
     },
     headerImage: {
-      width: '100%', // Full width for a larger header image
-      height: 600, // Increased height for prominence
-    },
-    avatar: {
-        width: 100,
-        height: 100,
-        borderRadius: 50,
-    },
-    headerText: {
-      fontSize: 15, // Adjust font size for readability
-      fontWeight: '400', // Normal weight for the text
-      marginBottom: 15, 
-      color: '#fff', // Color of the text
-      paddingHorizontal: 20, // Horizontal padding for better layout
-      textAlign: 'center', // Center align the text
-    },
-    headerText2: {
-      fontSize: 20, // Adjust font size for readability
-      fontWeight: 'bold', // Normal weight for the text
-      color: '#fff', // Color of the text
-      marginTop: 15, // Space above the text
-      marginBottom: 20, 
-      paddingHorizontal: 20, // Horizontal padding for better layout
-      textAlign: 'center', // Center align the text
-      
-      },
-    container: {
-      flexGrow: 1,
-      paddingVertical: 20,
-      paddingHorizontal: 10,
-      alignItems: 'center',
-      backgroundColor: '#000', // Keep background for the rest of the app
-    },
-    movieContainer: {
-      backgroundColor: '#fff',
-      marginVertical: 10,
-      borderRadius: 10,
-      overflow: 'hidden',
-      width: '95%',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.1,
-      shadowRadius: 6,
-      elevation: 3,
-      padding: 15,
-    },
-    contentRow: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    image: {
-      width: 120,
-      height: 180,
-      resizeMode: 'contain',
-      backgroundColor: '#f0f0f0',
-      borderRadius: 8,
-    },
-    movieImage: {
-        width: 100,
-        height: 150,
-        borderRadius: 8,
-    },
-    content: {
-      flex: 1,
-      paddingLeft: 15,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    title: {
-      fontSize: 22,
-      fontWeight: 'bold',
-      color: '#1c3d72',
-      marginBottom: 6,
-      textAlign: 'center',
-    },
-    day: {
-      fontSize: 16,
-      color: '#6b7b8a',
-      marginBottom: 8,
-      textAlign: 'center',
-    },
-    age: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#fff',
-      backgroundColor: '#1b293a',
-      paddingVertical: 4,
-      paddingHorizontal: 8,
-      borderRadius: 5,
-      marginLeft: 10,
-    },
-    iconContainer: {
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    subtitle: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#eef3f8',
-      padding: 6,
-      borderRadius: 8,
-      marginRight: 10,
-    },
-    tabContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginBottom: 20,
-    },
-    subtitleText: {
-      marginLeft: 5,
-      fontSize: 14,
-      color: '#1c3d72',
-    },
-    lang: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#eef3f8',
-      padding: 6,
-      borderRadius: 8,
-      marginRight: 10,
-    },
-    button: {
-        backgroundColor: '#163d71',
-        paddingVertical: 15,
-        paddingHorizontal: 30,
-        borderRadius: 5,
-        marginTop: 10
-    },
-    buttonText: {
-      color: '#fff',
-      fontSize: 18,
-      fontWeight: 'bold',
-    },
-    avatarStyle: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        borderWidth: 2,
-        borderColor: '#fff',
+        width: '100%',
+        height: 600,
     },
     circleButton: {
         position: 'absolute',
@@ -831,6 +613,111 @@ const styles = StyleSheet.create({
         borderColor: 'black',
         backgroundColor: 'white',
     },
+    avatarStyle: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    headerText: {
+        fontSize: 15,
+        fontWeight: '400',
+        marginBottom: 15,
+        color: '#fff',
+        paddingHorizontal: 20,
+        textAlign: 'center',
+    },
+    headerText2: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#fff',
+        marginTop: 15,
+        marginBottom: 20,
+        paddingHorizontal: 20,
+        textAlign: 'center',
+    },
+    container: {
+        flexGrow: 1,
+        paddingVertical: 20,
+        paddingHorizontal: 10,
+        alignItems: 'center',
+        backgroundColor: '#000',
+    },
+    movieContainer: {
+        backgroundColor: '#fff',
+        marginVertical: 10,
+        borderRadius: 10,
+        overflow: 'hidden',
+        width: '95%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+        elevation: 3,
+        padding: 15,
+    },
+    contentRow: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    movieImage: {
+        width: 100,
+        height: 150,
+        borderRadius: 8,
+    },
+    content: {
+        flex: 1,
+        paddingLeft: 15,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    title: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1c3d72',
+        marginBottom: 6,
+        textAlign: 'center',
+    },
+    day: {
+        fontSize: 16,
+        color: '#6b7b8a',
+        marginBottom: 8,
+        textAlign: 'center',
+    },
+    iconContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    subtitle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eef3f8',
+        padding: 6,
+        borderRadius: 8,
+        marginRight: 10,
+    },
+    lang: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#eef3f8',
+        padding: 6,
+        borderRadius: 8,
+        marginRight: 10,
+    },
+    age: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#fff',
+        backgroundColor: '#1b293a',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+        borderRadius: 5,
+        marginLeft: 10,
+    },
     viewDetailsButton: {
         backgroundColor: '#1e2a3a',
         paddingVertical: 12,
@@ -838,35 +725,176 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginTop: 15,
         alignItems: 'center',
-  },
-  viewDetailsText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-},
-modalView: {
-    backgroundColor: '#f4f4f4', // Lighter background for better visibility
-    padding: 30,
-    borderRadius: 20,
-    width: '80%',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5, // Adds shadow effect for depth
-},
-closeModalButton: {
-    backgroundColor: '#ff4d4d', // Close button in red for attention
-    padding: 10,
-    borderRadius: 50,
-    marginTop: 20,
-},
+    },
+    viewDetailsText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalView: {
+        backgroundColor: '#f4f4f4',
+        padding: 30,
+        borderRadius: 20,
+        width: '80%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginBottom: 20,
+        width: '100%',
+    },
+    tab: {
+        padding: 10,
+    },
+    activeTab: {
+        borderBottomWidth: 2,
+        borderBottomColor: '#6200ea',
+    },
+    tabText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    profileContainer: {
+        alignItems: 'center',
+        marginBottom: 20,
+        width: '100%',
+    },
+    name: {
+        fontSize: 20,
+        color: '#333',
+        marginBottom: 20,
+    },
+    buttonContainer: {
+        marginBottom: 20,
+        width: '80%',
+        borderRadius: 10,
+        overflow: 'hidden',
+    },
+    ticketSection: {
+        backgroundColor: '#1c1c1c',
+        padding: 20,
+        borderRadius: 10,
+        width: '100%',
+        maxHeight: 400,
+    },
+    ticketItem: {
+        backgroundColor: '#222',
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 15,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 6,
+        alignItems: 'flex-start',
+        width: '100%',
+        minHeight: 120,
+        borderWidth: 1,
+        borderColor: '#444',
+    },
+    ticketItemText: {
+        color: '#f0f0f0',
+        fontSize: 16,
+        marginBottom: 5,
+        fontWeight: '600',
+    },
+    ticketDetail: {
+        color: '#ffcc00',
+        fontSize: 16,
+        fontWeight: '500',
+    },
+    seatContainer: {
+        borderTopWidth: 1,
+        borderTopColor: '#444',
+        paddingTop: 10,
+        marginTop: 10,
+        width: '100%',
+    },
+    ticketButton: {
+        backgroundColor: '#f57c00',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 8,
+        marginTop: 10,
+        alignSelf: 'center',
+    },
+    ticketButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    noTicketsText: {
+        color: '#f0f0f0',
+        fontSize: 16,
+        marginBottom: 20,
+        fontWeight: '600',
+        textAlign: 'center',
+    },
+    EditProfileSection: {
+        width: '100%',
+        marginBottom: 20,
+    },
+    avatarSelectionTitle: {
+        fontSize: 16,
+        marginBottom: 10,
+        color: '#333',
+        textAlign: 'center',
+    },
+    avatarOptionsContainer: {
+        flexDirection: 'row',
+        marginBottom: 20,
+        justifyContent: 'space-around',
+        width: '100%',
+    },
+    avatarOption: {
+        padding: 5,
+        borderWidth: 2,
+        borderRadius: 50,
+        borderColor: 'transparent',
+    },
+    selectedAvatarOption: {
+        borderColor: '#6200ea',
+    },
+    avatarOptionImage: {
+        width: 50,
+        height: 50,
+        borderRadius: 25,
+    },
+    input: {
+        height: 40,
+        borderColor: '#6200ea',
+        borderWidth: 1,
+        borderRadius: 8,
+        marginBottom: 12,
+        paddingHorizontal: 10,
+        width: '100%',
+        backgroundColor: '#fff',
+    },
+    qrCodeTitle: {
+        color: '#ff8c00',
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 20,
+    },
+    closeModalButton: {
+        backgroundColor: '#ff4d4d',
+        padding: 10,
+        borderRadius: 50,
+        marginTop: 20,
+    }
 });
