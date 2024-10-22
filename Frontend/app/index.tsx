@@ -493,7 +493,7 @@ export default function HomeScreen() {
                                                                 seat: seat
                                                             })}
                                                         >
-                                                            <Text style={styles.ticketButtonText}>Show QR Code for {seat}</Text>
+                                                            <Text style={styles.ticketButtonText}>Show QR Code</Text>
                                                         </TouchableOpacity>
                                                     </View>
                                                 ))}
@@ -808,13 +808,13 @@ const styles = StyleSheet.create({
     },
     ticketItemText: {
         color: '#f0f0f0',
-        fontSize: 16,
+        fontSize: 15,
         marginBottom: 5,
         fontWeight: '600',
     },
     ticketDetail: {
         color: '#ffcc00',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: '500',
     },
     seatContainer: {
