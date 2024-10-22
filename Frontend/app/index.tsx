@@ -404,7 +404,7 @@ export default function HomeScreen() {
                         {/* Profile Tab Content */}
                         {activeTab === 'profile' && (
                             <View style={styles.profileContainer}>
-                                <Text style={styles.name}>Welcome to your profile</Text>
+                                <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
                                 <View style={styles.buttonContainer}>
                                     <Button 
                                         title="Log Out" 

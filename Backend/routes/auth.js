@@ -81,6 +81,7 @@ router.post('/signup', async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message }); // Return the error message
     }
 });
+
 // get the user by its email
 router.get('/user', async (req, res) => {
     try {
@@ -137,6 +138,8 @@ router.put('/update', async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
+
+
 // DELETE user by email
 router.delete('/delete', async (req, res) => {
     const { email } = req.body;
@@ -158,4 +161,5 @@ router.delete('/delete', async (req, res) => {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
+
 module.exports = router;

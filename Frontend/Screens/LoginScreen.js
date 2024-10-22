@@ -233,6 +233,27 @@ const LoginScreen = ({ navigation }) => {
                                 <Text style={styles.tabText}>Edit Profile</Text>
                             </TouchableOpacity>
                         </View>
+                        
+                        {/* Profile Tab Content */}
+                        {activeTab === 'profile' && (
+                            <View style={styles.profileContainer}>
+                                <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
+                                <View style={styles.buttonContainer}>
+                                    <Button 
+                                        title="Log Out" 
+                                        onPress={handleLogout} 
+                                        color="#ff5c5c"
+                                    />
+                                </View>
+                                <View style={styles.buttonContainer}>
+                                    <Button 
+                                        title="Go to Home" 
+                                        onPress={handleGoHome} 
+                                        color="#4a90e2"
+                                    />
+                                </View>
+                            </View>
+                        )}
 
                         {activeTab === 'tickets' && (
                             <ScrollView style={styles.ticketSection}>
