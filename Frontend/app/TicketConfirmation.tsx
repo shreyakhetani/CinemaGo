@@ -6,7 +6,7 @@ import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 import { useRouter } from 'expo-router'; // or import { useNavigation } from '@react-navigation/native';
 
-const API_BASE_URL = 'http://192.168.0.12:5000';
+const API_BASE_URL = 'http://192.168.32.196:5000';
 
 type SelectedSeat = { row: number; col: number };
 interface UserData {

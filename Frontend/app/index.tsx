@@ -16,7 +16,7 @@ interface UserData {
     avatar?: string | number;
 }
 
-const API_BASE_URL = 'http://192.168.0.12:5000';
+const API_BASE_URL = 'http://192.168.32.196:5000';
 
 const images: { [key: string]: any } = {
     'Joker': require('../assets/images/Joker.jpeg'),
@@ -119,7 +119,7 @@ export default function HomeScreen() {
 
     const fetchUserData = async () => {
         try {
-            const response = await fetch(`http://localhost:5000/api/auth/user?email=${email}`);
+            const response = await fetch(`${API_BASE_URL}/api/auth/user?email=${email}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     setError('User data not found.');
@@ -142,7 +142,7 @@ export default function HomeScreen() {
     };
     
     const handleDeleteAccount = async () => {
-        const response = await fetch('http://192.168.0.12:5000/api/auth/delete', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/delete`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
