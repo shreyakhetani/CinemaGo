@@ -478,7 +478,7 @@ const styles = StyleSheet.create({
         borderRadius: 50,
     },
     name: {
-        fontSize: 12,
+        fontSize: 20,
         color: '#333',
     },
     ticketSection: {

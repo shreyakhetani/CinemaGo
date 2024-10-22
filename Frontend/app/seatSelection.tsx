@@ -6,6 +6,7 @@ import {
 import Footer from '@/components/footer';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
+import * as FileSystem from 'expo-file-system';
 
 const API_BASE_URL = 'http://192.168.0.12:5000';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -94,7 +95,14 @@ export default function SeatSelectionScreen() {
     const showtimeParam = params.showtime as string;
     const hallIdParam = params.hallId as string;
     const router = useRouter();
-
+    const [UserEmail, setUserEmail] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const filePath = `${FileSystem.documentDirectory}userData.json`;
+    interface UserData {
+        email?: string;
+        firstName?: string;
+        avatar?: string | number;
+    }
     useEffect(() => {
         if (showtimeParam && hallIdParam) {
             setShowtime(showtimeParam);
@@ -198,7 +206,35 @@ export default function SeatSelectionScreen() {
             Array(seatsPerRow).fill('free' as SeatStatus)
         );
     };
-
+    const loadUserDataFromFile = async () => {
+        try {
+            const fileInfo = await FileSystem.getInfoAsync(filePath);
+            if (!fileInfo.exists) {
+                console.log('User data file does not exist.');
+                setEmail(""); // No email available, so keep it empty
+                setLoading(false);
+                return;
+            }
+    
+            const fileContent = await FileSystem.readAsStringAsync(filePath);
+            const userData: UserData = JSON.parse(fileContent);
+            const useremail = userData.email;
+    
+            console.log("Email for ticket from file:", useremail);  // Log the email
+    
+            if (useremail) {
+                setEmail(useremail);  // Set email from file if it exists
+            } else {
+                setEmail(""); // No email found, set it empty
+                setError('No email found in user data.');
+            }
+            setLoading(false);
+        } catch (error) {
+            console.error('Error loading user data from file:', error);
+            setError('Error loading user data from file.');
+            setLoading(false);
+        }
+    };
     const handleConfirmBooking = () => {
         const totalTickets = adultTickets + childTickets + pensionerTickets + studentTickets;
 
@@ -334,21 +370,23 @@ export default function SeatSelectionScreen() {
                                 {hallName || 'Hall information not available'}
                             </Text>
                             <Text style={styles.dateTime}>
-                                {new Date(showtime).toLocaleDateString('en-US', { 
-                                    weekday: 'long', 
-                                    year: 'numeric', 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                })}
-                            </Text>
-                            <Text style={styles.dateTime}>
-                                {"Show Time: "}
-                                {new Date(showtime).toLocaleTimeString('en-US', { 
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    hour12: false
-                                })}
-                            </Text>
+                            {new Date(showtime).toLocaleDateString('en-US', { 
+                                weekday: 'long', 
+                                year: 'numeric', 
+                                month: 'long', 
+                                day: 'numeric',
+                                timeZone: 'Europe/Helsinki'  // Set Helsinki time zone
+                            })}
+                        </Text>
+                        <Text style={styles.dateTime}>
+                            {"Show Time: "}
+                            {new Date(showtime).toLocaleTimeString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Europe/Helsinki'  // Set Helsinki time zone
+                            })}
+                        </Text>
                         </View>
                         <Text style={styles.title}>Choose your seats</Text>
                         <View style={styles.screenContainer}>
@@ -451,62 +489,63 @@ export default function SeatSelectionScreen() {
                 </ScrollView>
             </View>
     
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={isPaymentModalVisible}
-                onRequestClose={handleCancelPayment}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <ScrollView contentContainerStyle={styles.modalContent}>
-                            <Text style={styles.modalTitle}>Payment Details</Text>
+                    <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={isPaymentModalVisible}
+                    onRequestClose={handleCancelPayment}
+                    onShow={loadUserDataFromFile}  // Load user data when modal is shown
+                    >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContainer}>
+                            <ScrollView contentContainerStyle={styles.modalContent}>
+                                <Text style={styles.modalTitle}>Payment Details</Text>
 
-                            <TextInput
-                                placeholder="Email"
-                                value={Email}
-                                onChangeText={setEmail}
-                                style={styles.input}
-                                placeholderTextColor="#999"
-                            />
-                            
-                            <CardInput
-                                value={cardNumber}
-                                onChangeText={setCardNumber}
-                            />
-                            
-                            <View style={styles.row}>
                                 <TextInput
-                                    placeholder="Ex.Date (MM/YY)"
-                                    value={expiryDate}
-                                    keyboardType="numeric"
-                                    onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
-                                    style={[styles.input, styles.smallInput]}
-                                    maxLength={5}
+                                    placeholder={Email ? "Email" : "Please enter your email"} // Show placeholder if email is empty
+                                    value={Email}
+                                    onChangeText={setEmail}
+                                    style={styles.input}
                                     placeholderTextColor="#999"
                                 />
                                 
-                                <TextInput
-                                    placeholder="CVV"
-                                    value={cvv}
-                                    keyboardType="numeric"
-                                    onChangeText={setCvv}
-                                    style={[styles.input, styles.smallInput]}
-                                    maxLength={3}
-                                    placeholderTextColor="#999"
+                                <CardInput
+                                    value={cardNumber}
+                                    onChangeText={setCardNumber}
                                 />
-                            </View>
+                                
+                                <View style={styles.row}>
+                                    <TextInput
+                                        placeholder="Ex.Date (MM/YY)"
+                                        value={expiryDate}
+                                        keyboardType="numeric"
+                                        onChangeText={(text) => setExpiryDate(formatExpiryDate(text))}
+                                        style={[styles.input, styles.smallInput]}
+                                        maxLength={5}
+                                        placeholderTextColor="#999"
+                                    />
+                                    
+                                    <TextInput
+                                        placeholder="CVV"
+                                        value={cvv}
+                                        keyboardType="numeric"
+                                        onChangeText={setCvv}
+                                        style={[styles.input, styles.smallInput]}
+                                        maxLength={3}
+                                        placeholderTextColor="#999"
+                                    />
+                                </View>
 
-                            <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
-                                <Text style={styles.payButtonText}>Pay</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.cancelButton} onPress={handleCancelPayment}>
-                                <Text style={styles.cancelButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-                        </ScrollView>
+                                <TouchableOpacity style={styles.payButton} onPress={handlePayPress}>
+                                    <Text style={styles.payButtonText}>Pay</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.cancelButton} onPress={handleCancelPayment}>
+                                    <Text style={styles.cancelButtonText}>Cancel</Text>
+                                </TouchableOpacity>
+                            </ScrollView>
+                        </View>
                     </View>
-                </View>
-            </Modal>
+                </Modal>
             <Footer />
         </ScrollView>
     );

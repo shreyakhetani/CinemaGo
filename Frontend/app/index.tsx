@@ -646,7 +646,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
       },
     name: {
-        fontSize: 12,
+        fontSize: 20,
         color: '#333',
     },
     avatarContainer: {

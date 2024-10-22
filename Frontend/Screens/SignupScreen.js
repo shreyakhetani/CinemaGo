@@ -8,10 +8,32 @@ export default function SignupScreen({ navigation }) {
     const [phoneNumber, setPhoneNumber] = useState('');
     const [password, setPassword] = useState('');
 
+    // Regular expressions for validation
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@(gmail|outlook|yahoo)\.(com|fi|net)$/;
+    const phoneNumberRegex = /^0\d{9}$/; // Starts with 0, followed by exactly 19 digits (10 digits in total)
+
     const handleSignup = async () => {
         // Basic validation
         if (!firstName || !lastName || !email || !phoneNumber || !password) {
             Alert.alert('Error', 'Please fill in all fields.');
+            return;
+        }
+
+        // Validate email
+        if (!emailRegex.test(email)) {
+            Alert.alert('Error', 'Email must be a valid Gmail, Outlook, Yahoo, .com, .fi, or .net domain.');
+            return;
+        }
+
+        // Validate phone number
+        if (!phoneNumberRegex.test(phoneNumber)) {
+            Alert.alert('Error', 'Phone number must start with 0 and contain exactly 10 digits.');
+            return;
+        }
+
+        // Validate password length
+        if (password.length < 8) {
+            Alert.alert('Error', 'Password must be at least 8 characters long.');
             return;
         }
 
