@@ -6,17 +6,28 @@ const QRCode = require('qrcode');
 router.post('/send-ticket-email', async (req, res) => {
     const { movieName, hallName, showtime, duration, language, seat, userEmail } = req.body;
 
-    // Convert showtime to Helsinki timezone
-    const helsinkiTime = new Date(showtime).toLocaleString('en-US', {
-        timeZone: 'Europe/Helsinki',
-        hour12: false
+    const getTodayDate = () => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        return `${day}.${month}.${year}`;
+    };
+    const todayDate = getTodayDate();
+
+    // Format time exactly like ticket confirmation
+    const helsinkiTime = new Date(new Date(showtime).getTime() + 3 * 60 * 60 * 1000).toLocaleString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Europe/Helsinki'
     });
 
     // Generate QR code for this specific ticket
     const ticketInfo = JSON.stringify({
         movieName,
         hallName,
-        showtime: helsinkiTime,
+        showtime: `${todayDate} - ${helsinkiTime}`,
         duration,
         language,
         seat,
@@ -42,7 +53,7 @@ router.post('/send-ticket-email', async (req, res) => {
                 <h2>Your Movie Ticket Details</h2>
                 <p><strong>Movie:</strong> ${movieName}</p>
                 <p><strong>Hall:</strong> ${hallName}</p>
-                <p><strong>Showtime:</strong> ${helsinkiTime}</p>
+                <p><strong>Showtime:</strong> ${todayDate} - ${helsinkiTime}</p>
                 <p><strong>Duration:</strong> ${duration}</p>
                 <p><strong>Language:</strong> ${language}</p>
                 <p><strong>Seat:</strong> ${seat}</p>

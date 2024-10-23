@@ -73,6 +73,18 @@ type ShowtimeData = {
     availableSeats: number;
 };
 
+// New helper function for formatting Helsinki time
+const formatHelsinkiTime = (dateString: string): string => {
+    const date = new Date(dateString);
+    // Adjust for Helsinki timezone (UTC+3)
+    const helsinkiTime = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+    return helsinkiTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+    });
+};
+
 export default function SeatSelectionScreen() {
     const [seats, setSeats] = useState<Seats>([]);
     const [loading, setLoading] = useState(true);
@@ -117,7 +129,15 @@ export default function SeatSelectionScreen() {
         }
     }, [hallId, showtime]);
 
-    
+    const getTodayDate = (): string => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        return `${day}.${month}.${year}`;
+    };
+    const todayDate = getTodayDate();
+
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
@@ -342,7 +362,7 @@ export default function SeatSelectionScreen() {
     const formatExpiryDate = (text: string) => {
         return text.replace(/\D/g, '').replace(/(\d{2})(?=\d)/, '$1/');
     };
-
+    
     return (
         <ScrollView>
             {movie && (
@@ -369,18 +389,10 @@ export default function SeatSelectionScreen() {
                             <Text style={styles.hallName}>
                                 {hallName || 'Hall information not available'}
                             </Text>
-                            <Text style={styles.dateTime}>
-                            {new Date(showtime).toLocaleDateString('en-US', { 
-                                weekday: 'long', 
-                                year: 'numeric', 
-                                month: 'long', 
-                                day: 'numeric',
-                                timeZone: 'Europe/Helsinki'  // Set Helsinki time zone
-                            })}
-                        </Text>
+                            <Text style={styles.dateTime}>{todayDate}</Text>
                         <Text style={styles.dateTime}>
                             {"Show Time: "}
-                            {new Date(showtime).toLocaleTimeString('en-US', { 
+                            {new Date(new Date(showtime).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString('en-US', { 
                                 hour: '2-digit', 
                                 minute: '2-digit',
                                 hour12: false,

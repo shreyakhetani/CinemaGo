@@ -7,26 +7,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 
 const API_BASE_URL = 'http://192.168.32.196:5000';
 
-const images: { [key: string]: any } = {
-  'Joker': require('../assets/images/Joker.jpeg'),
-  'WildRobot': require('../assets/images/WildRobot.png'),
-  'ItEndsWithUs': require('../assets/images/ItEndsWithUs.png'),
-  'splash': require('../assets/images/splash.png'),
-};
-
-const getImageSource = (imageName: string): any => {
-  // Remove the file extension from the imageName if it exists
-  const baseName = imageName.split('.')[0];
-  
-  if (images[baseName]) {
-    return images[baseName];
-  } else {
-    console.warn(`Image not found: ${imageName}`);
-    return images['splash'];
-  }
-};
-
-// Update the showtime type to include availableSeats
+// Define types
 type Showtime = {
   _id: string;
   showtime: string;
@@ -37,6 +18,19 @@ type Showtime = {
   };
 };
 
+// Image mapping
+const images: { [key: string]: any } = {
+  'Joker': require('../assets/images/Joker.jpeg'),
+  'WildRobot': require('../assets/images/WildRobot.png'),
+  'ItEndsWithUs': require('../assets/images/ItEndsWithUs.png'),
+  'splash': require('../assets/images/splash.png'),
+};
+
+// Helper functions
+const getImageSource = (imageName: string): any => {
+  const baseName = imageName.split('.')[0];
+  return images[baseName] || images['splash'];
+};
 
 const getTodayDate = (): string => {
   const today = new Date();
@@ -44,6 +38,18 @@ const getTodayDate = (): string => {
   const month = (today.getMonth() + 1).toString().padStart(2, '0');
   const day = today.getDate().toString().padStart(2, '0');
   return `${day}.${month}.${year}`;
+};
+
+// New helper function for formatting Helsinki time
+const formatHelsinkiTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  // Adjust for Helsinki timezone (UTC+3)
+  const helsinkiTime = new Date(date.getTime() + (3 * 60 * 60 * 1000));
+  return helsinkiTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  });
 };
 
 export default function MovieDetail() {
@@ -58,13 +64,11 @@ export default function MovieDetail() {
   
   const todayDate = getTodayDate();
 
-  
   const calculateSeats = (seats: string[][]) => {
     const totalSeats = seats.flat().length;
     const availableSeats = seats.flat().filter(seat => seat === 'free').length;
     return { totalSeats, availableSeats };
   };
-  
 
   useEffect(() => {
     const fetchMovieDetailsAndShowtimes = async () => {
@@ -75,7 +79,6 @@ export default function MovieDetail() {
         ]);
         
         setMovie(movieResponse.data);
-        // console.log('Showtimes response:', JSON.stringify(showtimesResponse.data, null, 2));
         setShowtimes(showtimesResponse.data);
       } catch (error) {
         console.error('Error fetching movie details and showtimes:', error);
@@ -115,7 +118,6 @@ export default function MovieDetail() {
     );
   }
 
-  
   return (
     <ScrollView style={styles.scrollView}>
       <View style={styles.container}>
@@ -137,12 +139,9 @@ export default function MovieDetail() {
         <Text style={styles.showtimesTitle}>Select Showtime:</Text>
         {showtimes.map((showtime, index) => {
           const { totalSeats, availableSeats } = calculateSeats(showtime.hallId.seats);
-
-          // console.log(`Showtime ${index}:`, { 
-          //   availableSeats, 
-          //   totalSeats
-          // });
-
+          // Format the time for Helsinki timezone
+          const formattedTime = formatHelsinkiTime(showtime.showtime);
+          
           return (
             <TouchableOpacity 
               key={index} 
@@ -150,9 +149,7 @@ export default function MovieDetail() {
               onPress={() => handleShowtimeSelect(showtime.showtime, showtime.hallId._id)}
             >
               <View style={styles.ticketdetails}>
-                <Text style={styles.time}>
-                  {new Date(showtime.showtime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                </Text>
+                <Text style={styles.timeText}>{formattedTime}</Text>
                 <View style={styles.dateContent}>
                   <Text style={styles.date}>{todayDate}</Text>
                   <Text style={styles.hall}>{`CinemaGo, ${showtime.hallId.name}`}</Text>
@@ -161,18 +158,18 @@ export default function MovieDetail() {
               <View style={styles.vacacyContainer}>
                 <Text style={styles.language}>{`2D | ${movie.language}`}</Text>
                 <View style={styles.progressContainer}>
-                <CircularProgress
-                  value={availableSeats}
-                  radius={25}
-                  duration={2000}
-                  progressValueColor={'#000'}
-                  maxValue={totalSeats}
-                  title={'Seats'}
-                  titleColor={'#000'}
-                  titleStyle={{ fontSize: 8, marginTop: -10 }} // Reduce space between title and number
-                  activeStrokeColor={'#2ecc71'}
-                  inActiveStrokeColor={'#e74c3c'}
-                />
+                  <CircularProgress
+                    value={availableSeats}
+                    radius={25}
+                    duration={2000}
+                    progressValueColor={'#000'}
+                    maxValue={totalSeats}
+                    title={'Seats'}
+                    titleColor={'#000'}
+                    titleStyle={{ fontSize: 8, marginTop: -10 }}
+                    activeStrokeColor={'#2ecc71'}
+                    inActiveStrokeColor={'#e74c3c'}
+                  />
                   <View style={styles.vacancyContent}>
                     <Text style={styles.vacancyText}>Available Seats</Text>
                     <Text style={styles.seats}>{`${availableSeats}/${totalSeats}`}</Text>
@@ -222,7 +219,6 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     marginBottom: 5,
-    
   },
   infoLabel: {
     fontWeight: 'bold',
@@ -242,7 +238,7 @@ const styles = StyleSheet.create({
   ticketContainer: {
     backgroundColor: '#fff',
     flexDirection: 'column',
-    padding: 10,
+    padding: 15,
     marginBottom: 10,
     borderRadius: 5,
   },
@@ -252,10 +248,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  time: {
-    fontSize: 24,
+  timeText: {
+    fontSize: 28,
     fontWeight: 'bold',
-    color: '#1b293a',
+    color: '#000',
+    marginBottom: 5,
   },
   dateContent: {
     alignItems: 'flex-end',

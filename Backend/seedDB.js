@@ -43,18 +43,22 @@ async function seedDB() {
 
         // Create a sample movie show for each hall and link it to a movieId
         const movieShows = [
-            { movieId: movieIds[0], hallId: cinemaHalls[0]._id, showtime: new Date("2024-10-20T16:00:00Z") },  // Joker in Hall 1
-            { movieId: movieIds[0], hallId: cinemaHalls[1]._id, showtime: new Date("2024-10-20T18:00:00Z") },  // Joker in Hall 2
-            { movieId: movieIds[0], hallId: cinemaHalls[2]._id, showtime: new Date("2024-10-20T20:00:00Z") },  // Joker in Hall 3
+            // Joker showtimes (UTC times)
+            { movieId: movieIds[0], hallId: cinemaHalls[0]._id, showtime: new Date("2024-10-20T14:00:00Z") },  
+            { movieId: movieIds[0], hallId: cinemaHalls[1]._id, showtime: new Date("2024-10-20T16:00:00Z") }, 
+            { movieId: movieIds[0], hallId: cinemaHalls[2]._id, showtime: new Date("2024-10-20T18:00:00Z") },  
 
-            { movieId: movieIds[1], hallId: cinemaHalls[3]._id, showtime: new Date("2024-10-20T16:00:00Z") },  // Wild Robot in Hall 4
-            { movieId: movieIds[1], hallId: cinemaHalls[4]._id, showtime: new Date("2024-10-20T19:00:00Z") },  // Wild Robot in Hall 5
-            { movieId: movieIds[1], hallId: cinemaHalls[5]._id, showtime: new Date("2024-10-20T21:00:00Z") },  // Wild Robot in Hall 6
+            // Wild Robot showtimes
+            { movieId: movieIds[1], hallId: cinemaHalls[3]._id, showtime: new Date("2024-10-20T15:00:00Z") },  
+            { movieId: movieIds[1], hallId: cinemaHalls[4]._id, showtime: new Date("2024-10-20T17:00:00Z") },  
+            { movieId: movieIds[1], hallId: cinemaHalls[5]._id, showtime: new Date("2024-10-20T19:00:00Z") },  
 
-            { movieId: movieIds[2], hallId: cinemaHalls[6]._id, showtime: new Date("2024-10-20T16:00:00Z") },  // It Ends with Us in Hall 7
-            { movieId: movieIds[2], hallId: cinemaHalls[7]._id, showtime: new Date("2024-10-20T19:00:00Z") },  // It Ends with Us in Hall 8
-            { movieId: movieIds[2], hallId: cinemaHalls[8]._id, showtime: new Date("2024-10-20T21:00:00Z") }   // It Ends with Us in Hall 9
+            // It Ends with Us showtimes
+            { movieId: movieIds[2], hallId: cinemaHalls[6]._id, showtime: new Date("2024-10-20T17:00:00Z") },  
+            { movieId: movieIds[2], hallId: cinemaHalls[7]._id, showtime: new Date("2024-10-20T18:00:00Z") },  
+            { movieId: movieIds[2], hallId: cinemaHalls[8]._id, showtime: new Date("2024-10-20T19:00:00Z") }  
         ];
+
 
         // Insert all movie shows into the database
         await MovieShow.insertMany(movieShows);

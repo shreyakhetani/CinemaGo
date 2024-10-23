@@ -104,6 +104,15 @@ export default function HomeScreen() {
     const todayDate = getTodayDate();
     const filePath = `${FileSystem.documentDirectory}userData.json`;
 
+    const getTicketDate = (): string => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        return `${day}.${month}.${year}`;
+    };
+    const todayTicketDate = getTicketDate();
+
     useEffect(() => {
         const fetchMovies = async () => {
             try {
@@ -467,12 +476,13 @@ export default function HomeScreen() {
                                                     Hall: <Text style={styles.ticketDetail}>{ticket.hallName}</Text>
                                                 </Text>
                                                 <Text style={styles.ticketItemText}>
-                                                    Showtime: <Text style={styles.ticketDetail}>
-                                                        {new Date(ticket.showtime).toLocaleString('en-US', {
-                                                            timeZone: 'Europe/Helsinki',
-                                                            hour12: false
-                                                        })}
-                                                    </Text>
+                                                    Showtime: <Text style={styles.ticketDetail}> {todayTicketDate} - {new Date(new Date(ticket.showtime).getTime() + 3 * 60 * 60 * 1000).toLocaleTimeString('en-US', { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit',
+                                                        hour12: false,
+                                                        timeZone: 'Europe/Helsinki'  // Set Helsinki time zone
+                                                    })}
+                                                </Text>
                                                 </Text>
                                                 <Text style={styles.ticketItemText}>
                                                     Duration: <Text style={styles.ticketDetail}>{ticket.duration}</Text>

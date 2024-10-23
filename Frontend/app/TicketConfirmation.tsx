@@ -32,6 +32,16 @@ export default function TicketConfirmationScreen() {
     const [firstName, setFirstName] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
 
+    const getTodayDate = (): string => {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = (today.getMonth() + 1).toString().padStart(2, '0');
+        const day = today.getDate().toString().padStart(2, '0');
+        return `${day}.${month}.${year}`;
+    };
+    const todayDate = getTodayDate();
+
+
     useEffect(() => {
         const fetchMovieDetails = async () => {
             try {
@@ -177,7 +187,12 @@ export default function TicketConfirmationScreen() {
             <View style={styles.infoContainer}>
                 <Text style={styles.infoText}>Movie: {movieName}</Text>
                 <Text style={styles.infoText}>Hall: {hallName}</Text>
-                <Text style={styles.infoText}>Showtime: {new Date(showtime).toLocaleString()}</Text>
+                <Text style={styles.infoText}>Showtime: {todayDate} - {new Date(new Date(showtime).getTime() + 3 * 60 * 60 * 1000).toLocaleString('en-US', { 
+                                hour: '2-digit', 
+                                minute: '2-digit',
+                                hour12: false,
+                                timeZone: 'Europe/Helsinki'  // Set Helsinki time zone
+                            })}</Text>
                 <Text style={styles.infoText}>Duration: {movieDetails?.duration}</Text>
                 <Text style={styles.infoText}>Language: {movieDetails?.language}</Text>
             </View>
