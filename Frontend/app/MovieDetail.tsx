@@ -38,6 +38,14 @@ type Showtime = {
 };
 
 
+const getTodayDate = (): string => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  return `${day}.${month}.${year}`;
+};
+
 export default function MovieDetail() {
   const router = useRouter();
   const params = useLocalSearchParams();
@@ -48,6 +56,8 @@ export default function MovieDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
+  const todayDate = getTodayDate();
+
   
   const calculateSeats = (seats: string[][]) => {
     const totalSeats = seats.flat().length;
@@ -144,9 +154,7 @@ export default function MovieDetail() {
                   {new Date(showtime.showtime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
                 </Text>
                 <View style={styles.dateContent}>
-                  <Text style={styles.date}>
-                    {new Date(showtime.showtime).toLocaleDateString()}
-                  </Text>
+                  <Text style={styles.date}>{todayDate}</Text>
                   <Text style={styles.hall}>{`CinemaGo, ${showtime.hallId.name}`}</Text>
                 </View>
               </View>
