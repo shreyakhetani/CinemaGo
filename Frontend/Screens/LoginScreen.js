@@ -6,10 +6,6 @@ import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 import CustomAlert from '@/components/CustomAlert';
 
-
-const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
-
-
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
     require('../assets/images/avatars/avatar2.jpg'),
@@ -53,9 +49,7 @@ const showAlert = (title, message) => {
         }
 
         try {
-
-
-            const response =  fetch(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -82,7 +76,7 @@ const showAlert = (title, message) => {
 
     const fetchTickets = async () => {
         try {
-            const ticketResponse = await fetch(`${API_BASE_URL}/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`https://g5-project-439411.nw.r.appspot.com/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
@@ -105,16 +99,6 @@ const showAlert = (title, message) => {
             fetchTickets();
         }
     }, [email]);
-
-    const handleLogout = async () => {
-        const filePath = `${FileSystem.documentDirectory}userData.json`;
-        try {
-            await FileSystem.deleteAsync(filePath);
-            router.replace('/');
-        } catch (error) {
-            console.error('Error during logout:', error);
-        }
-    };
 
     const saveUserDataToFile = async (userData) => {
         const filePath = `${FileSystem.documentDirectory}userData.json`;
@@ -150,8 +134,7 @@ const showAlert = (title, message) => {
         };
 
         try {
-
-            const response = await fetch(`${API_BASE_URL}/api/auth/update`, {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -179,7 +162,7 @@ const showAlert = (title, message) => {
         }
     };
 
-
+    
     return (
         <View style={styles.container}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
@@ -246,11 +229,7 @@ const showAlert = (title, message) => {
                             <View style={styles.profileContainer}>
                                 <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
                                 <View style={styles.buttonContainer}>
-                                    <Button 
-                                        title="Log Out" 
-                                        onPress={handleLogout} 
-                                        color="#ff5c5c"
-                                    />
+
                                 </View>
                                 <View style={styles.buttonContainer}>
                                     <Button 
