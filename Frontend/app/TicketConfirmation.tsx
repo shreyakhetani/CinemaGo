@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Button, Alert, ActivityIndicator, ScrollView ,TouchableOpacity } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { useLocalSearchParams } from 'expo-router';
 import axios from 'axios';
@@ -220,7 +220,10 @@ export default function TicketConfirmationScreen() {
                 </View>
             ))}
 
-            <Button title="Confirm All Tickets" onPress={handleTicketConfirmation} />
+            {/* <Button title="Confirm All Tickets" onPress={handleTicketConfirmation} /> */}
+            <TouchableOpacity style={[styles.confirmButton]} onPress={handleTicketConfirmation}>
+                                <Text style={[styles.confirmButtonText]}>Confirm All Tickets</Text>
+                                </TouchableOpacity>
         </ScrollView>
     );
 }
@@ -280,4 +283,17 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         color: '#1a1a1a',
     },
+    confirmButton: {
+        backgroundColor: '#1e2a3a',
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 10,
+        marginTop: 15,
+        alignItems: 'center',
+    },
+    confirmButtonText:{
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    }
 });
