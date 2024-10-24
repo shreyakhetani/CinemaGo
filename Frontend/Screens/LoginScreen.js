@@ -83,16 +83,6 @@ const LoginScreen = ({ navigation }) => {
         }
     }, [email]);
 
-    const handleLogout = async () => {
-        const filePath = `${FileSystem.documentDirectory}userData.json`;
-        try {
-            await FileSystem.deleteAsync(filePath);
-            router.replace('/');
-        } catch (error) {
-            console.error('Error during logout:', error);
-        }
-    };
-
     const saveUserDataToFile = async (userData) => {
         const filePath = `${FileSystem.documentDirectory}userData.json`;
         const jsonData = JSON.stringify(userData, null, 2);
@@ -215,11 +205,7 @@ const LoginScreen = ({ navigation }) => {
                             <View style={styles.profileContainer}>
                                 <Text style={styles.name}>Welcome {userData.firstName} {userData.lastName}</Text>
                                 <View style={styles.buttonContainer}>
-                                    <Button 
-                                        title="Log Out" 
-                                        onPress={handleLogout} 
-                                        color="#ff5c5c"
-                                    />
+
                                 </View>
                                 <View style={styles.buttonContainer}>
                                     <Button 
