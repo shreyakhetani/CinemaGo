@@ -8,6 +8,11 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
+
+const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
+
+
+
 // Define interfaces for type safety
 interface Ticket {
     movieName: string;
@@ -47,8 +52,6 @@ interface TicketDisplay extends Ticket {
     selectedSeat?: string;
 }
 
-
-const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
 
 const images: { [key: string]: any } = {
     'Joker': require('../assets/images/Joker.jpeg'),

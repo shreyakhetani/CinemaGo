@@ -5,7 +5,10 @@ import CircularProgress from 'react-native-circular-progress-indicator';
 import axios from 'axios';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
+
 const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
+
+
 
 // Define types
 type Showtime = {
