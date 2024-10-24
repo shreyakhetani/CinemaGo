@@ -5,10 +5,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 
-
-const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
-
-
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
     require('../assets/images/avatars/avatar2.jpg'),
@@ -39,9 +35,7 @@ const LoginScreen = ({ navigation }) => {
         }
 
         try {
-
-
-            const response =  fetch(`${API_BASE_URL}/api/auth/login`, {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -66,7 +60,7 @@ const LoginScreen = ({ navigation }) => {
 
     const fetchTickets = async () => {
         try {
-            const ticketResponse = await fetch(`${API_BASE_URL}/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`https://g5-project-439411.nw.r.appspot.com/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
@@ -133,8 +127,7 @@ const LoginScreen = ({ navigation }) => {
         };
 
         try {
-
-            const response = await fetch(`${API_BASE_URL}/api/auth/update`, {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -159,7 +152,7 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
-
+    
     return (
         <View style={styles.container}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
