@@ -8,6 +8,10 @@ import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
+
+
 // Define interfaces for type safety
 interface Ticket {
     movieName: string;
@@ -47,8 +51,6 @@ interface TicketDisplay extends Ticket {
     selectedSeat?: string;
 }
 
-
-const API_BASE_URL = 'http://192.168.32.196:5000';
 
 const images: { [key: string]: any } = {
     'Joker': require('../assets/images/Joker.jpeg'),

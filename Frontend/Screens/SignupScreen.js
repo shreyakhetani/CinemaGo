@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Text, StyleSheet, Alert } from 'react-native';
 
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
+
+
 export default function SignupScreen({ navigation }) {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -38,7 +42,7 @@ export default function SignupScreen({ navigation }) {
         }
 
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/signup', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

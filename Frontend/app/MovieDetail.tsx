@@ -5,7 +5,9 @@ import CircularProgress from 'react-native-circular-progress-indicator';
 import axios from 'axios';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
+
 const API_BASE_URL = 'http://192.168.32.196:5000';
+
 
 // Define types
 type Showtime = {

@@ -5,6 +5,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
 
+
+const API_BASE_URL = 'http://192.168.32.196:5000';
+
+
 const avatarOptions = [
     require('../assets/images/avatars/avatar1.jpg'),
     require('../assets/images/avatars/avatar2.jpg'),
@@ -35,7 +39,7 @@ const LoginScreen = ({ navigation }) => {
         }
 
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/login', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,7 +64,7 @@ const LoginScreen = ({ navigation }) => {
 
     const fetchTickets = async () => {
         try {
-            const ticketResponse = await fetch(`http://192.168.32.196:5000/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`${API_BASE_URL}/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
@@ -127,7 +131,7 @@ const LoginScreen = ({ navigation }) => {
         };
 
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/update', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/update`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -154,7 +158,7 @@ const LoginScreen = ({ navigation }) => {
 
     const handleDeleteAccount = async () => {
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/delete', {
+            const response = await fetch(`${API_BASE_URL}/api/auth/delete`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
