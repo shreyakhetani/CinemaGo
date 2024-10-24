@@ -6,7 +6,7 @@ import axios from 'axios';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 
-const API_BASE_URL = 'http://192.168.0.103:5000';
+const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
 
 
 // Define types

@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import QRCode from 'react-native-qrcode-svg';
 
 
-const API_BASE_URL = 'http://192.168.0.103:5000';
+const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
 
 
 // Define interfaces for type safety
@@ -400,14 +400,14 @@ export default function HomeScreen() {
                                     <Button 
                                         title="Log Out" 
                                         onPress={handleLogout} 
-                                        color="#ff5c5c"
+                                        color="#888"
                                     />
                                 </View>
                                 <View style={styles.buttonContainer}>
                                     <Button 
                                         title="Go to Home" 
                                         onPress={handleGoHome} 
-                                        color="#4a90e2"
+                                        color="#1e2a3a"
                                     />
                                 </View>
                             </View>
@@ -528,7 +528,9 @@ export default function HomeScreen() {
                                     value={newPhoneNumber}
                                     onChangeText={setNewPhoneNumber}
                                 />
-                                <Button title="Update Profile" onPress={handleUpdateProfile} />
+                                <TouchableOpacity style={[styles.viewDetailsButton]} onPress={handleUpdateProfile}>
+                                <Text style={[styles.viewDetailsText]}>Update Profile</Text>
+                                </TouchableOpacity>
                             </View>
                         )}
                     </View>
@@ -710,7 +712,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1e2a3a',
         paddingVertical: 12,
         paddingHorizontal: 25,
-        borderRadius: 5,
+        borderRadius: 10,
         marginTop: 15,
         alignItems: 'center',
     },

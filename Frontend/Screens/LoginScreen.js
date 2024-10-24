@@ -167,7 +167,7 @@ const showAlert = (title, message) => {
         <View style={styles.container}>
             <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                 <Ionicons name="arrow-back" size={24} color="black" />
-                <Text style={styles.title}>Login</Text>
+                <Text style={styles.title}>Home</Text>
             </TouchableOpacity>
 
             <TextInput
@@ -235,7 +235,7 @@ const showAlert = (title, message) => {
                                     <Button 
                                         title="Go to Home" 
                                         onPress={handleGoHome} 
-                                        color="#4a90e2"
+                                        color="#1e2a3a"
                                     />
                                 </View>
                             </View>
@@ -353,7 +353,9 @@ const showAlert = (title, message) => {
                                     value={newPhoneNumber}
                                     onChangeText={setNewPhoneNumber}
                                 />
-                                <Button title="Update Profile" onPress={handleUpdateProfile} />
+                                <TouchableOpacity style={[styles.loginButton]} onPress={handleUpdateProfile}>
+                                <Text style={[styles.loginText]}>Update Profile</Text>
+                                </TouchableOpacity>
                             </View>
                         )}
                     </View>
@@ -430,7 +432,7 @@ const styles = StyleSheet.create({
         height: 40,
         borderColor: '#000',
         borderWidth: 1,
-        borderRadius: 8,
+        borderRadius: 10,
         marginBottom: 12,
         paddingHorizontal: 10,
         backgroundColor: '#fff',
@@ -439,7 +441,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#1e2a3a',
         paddingVertical: 12,
         paddingHorizontal: 25,
-        borderRadius: 5,
+        borderRadius: 10,
         marginTop: 15,
         alignItems: 'center',
     },
