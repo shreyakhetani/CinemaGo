@@ -35,7 +35,7 @@ const LoginScreen = ({ navigation }) => {
         }
 
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/login', {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ const LoginScreen = ({ navigation }) => {
 
     const fetchTickets = async () => {
         try {
-            const ticketResponse = await fetch(`http://192.168.32.196:5000/api/tickets/tickets?email=${email}`);
+            const ticketResponse = await fetch(`https://g5-project-439411.nw.r.appspot.com/api/tickets/tickets?email=${email}`);
             const ticketData = await ticketResponse.json();
 
             if (ticketResponse.ok) {
@@ -127,7 +127,7 @@ const LoginScreen = ({ navigation }) => {
         };
 
         try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/update', {
+            const response = await fetch('https://g5-project-439411.nw.r.appspot.com/api/auth/update', {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -152,30 +152,7 @@ const LoginScreen = ({ navigation }) => {
         }
     };
 
-    const handleDeleteAccount = async () => {
-        try {
-            const response = await fetch('http://192.168.32.196:5000/api/auth/delete', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                Alert.alert('Success', 'Account deleted successfully');
-                setIsModalVisible(false);
-                router.replace('/');
-            } else {
-                Alert.alert('Error', data.message || 'Delete failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error deleting account:', error);
-            Alert.alert('Error', 'An error occurred. Please try again.');
-        }
-    };
+    
 
     return (
         <View style={styles.container}>
@@ -368,7 +345,6 @@ const LoginScreen = ({ navigation }) => {
                                     onChangeText={setNewPhoneNumber}
                                 />
                                 <Button title="Update Profile" onPress={handleUpdateProfile} />
-                                <Button title="Delete Account" onPress={handleDeleteAccount} color="red" />
                             </View>
                         )}
                     </View>

@@ -48,7 +48,7 @@ interface TicketDisplay extends Ticket {
 }
 
 
-const API_BASE_URL = 'http://192.168.32.196:5000';
+const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
 
 const images: { [key: string]: any } = {
     'Joker': require('../assets/images/Joker.jpeg'),
@@ -277,30 +277,7 @@ export default function HomeScreen() {
         }
     };
 
-    const handleDeleteAccount = async (): Promise<void> => {
-        try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/delete`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email }),
-            });
 
-            const data = await response.json();
-
-            if (response.ok) {
-                Alert.alert('Success', 'Account deleted successfully');
-                setIsModalVisible(false);
-                router.replace('/');
-            } else {
-                Alert.alert('Error', data.message || 'Delete failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Error deleting account:', error);
-            Alert.alert('Error', 'An error occurred. Please try again.');
-        }
-    };
 
     return (
         <ScrollView contentContainerStyle={styles.scrollView}>
@@ -550,7 +527,6 @@ export default function HomeScreen() {
                                     onChangeText={setNewPhoneNumber}
                                 />
                                 <Button title="Update Profile" onPress={handleUpdateProfile} />
-                                <Button title="Delete Account" onPress={handleDeleteAccount} color="red" />
                             </View>
                         )}
                     </View>

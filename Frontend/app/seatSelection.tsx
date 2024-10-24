@@ -8,7 +8,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import axios from 'axios';
 import * as FileSystem from 'expo-file-system';
 
-const API_BASE_URL = 'http://192.168.32.196:5000';
+const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const images: { [key: string]: any } = {
