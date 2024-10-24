@@ -4,6 +4,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as FileSystem from 'expo-file-system';
+import CustomAlert from '@/components/CustomAlert';
 
 
 const API_BASE_URL = 'https://g5-project-439411.nw.r.appspot.com';
@@ -32,9 +33,22 @@ const LoginScreen = ({ navigation }) => {
     const [newPhoneNumber, setNewPhoneNumber] = useState('');
     const router = useRouter();
 
+    const [alertVisible, setAlertVisible] = useState(false);
+const [alertTitle, setAlertTitle] = useState('');
+const [alertMessage, setAlertMessage] = useState('');
+
+const showAlert = (title, message) => {
+    setAlertTitle(title);
+    setAlertMessage(message);
+    setAlertVisible(true);
+};
+
+
+
     const handleLogin = async () => {
         if (!email || !password) {
-            Alert.alert('Error', 'Please fill in all fields.');
+            showAlert('Error', 'Please fill in all fields.');
+            // Alert.alert('Error', 'Please fill in all fields.');
             return;
         }
 
@@ -56,11 +70,13 @@ const LoginScreen = ({ navigation }) => {
                 setIsModalVisible(true);
                 fetchTickets();
             } else {
-                Alert.alert('Error', data.message || 'Login failed. Please try again.');
+                showAlert('Error', data.message || 'Login failed. Please try again.');
+                // Alert.alert('Error', data.message || 'Login failed. Please try again.');
             }
         } catch (error) {
             console.error('Error logging in:', error);
-            Alert.alert('Error', 'An error occurred. Please try again.');
+            showAlert('Error', 'An error occurred. Please try again.');
+            // Alert.alert('Error', 'An error occurred. Please try again.');
         }
     };
 
@@ -74,7 +90,8 @@ const LoginScreen = ({ navigation }) => {
             }
         } catch (error) {
             console.error('Error fetching tickets:', error);
-            Alert.alert('Error', 'An error occurred while fetching tickets.');
+            showAlert('Error', 'An error occurred while fetching tickets.');
+            // Alert.alert('Error', 'An error occurred while fetching tickets.');
         }
     };
 
@@ -145,17 +162,20 @@ const LoginScreen = ({ navigation }) => {
             const data = await response.json();
 
             if (response.ok) {
-                Alert.alert('Success', 'Profile updated successfully');
+                showAlert('Success', 'Profile updated successfully');
+                // Alert.alert('Success', 'Profile updated successfully');
                 setUserData({ ...userData, ...updatedData });
                 setNewFirstName('');
                 setNewLastName('');
                 setNewPhoneNumber('');
             } else {
-                Alert.alert('Error', data.message || 'Update failed. Please try again.');
+                showAlert('Error', data.message || 'Update failed. Please try again.');
+                // Alert.alert('Error', data.message || 'Update failed. Please try again.');
             }
         } catch (error) {
             console.error('Error updating profile:', error);
-            Alert.alert('Error', 'An error occurred. Please try again.');
+            showAlert('Error', 'An error occurred. Please try again.');
+            // Alert.alert('Error', 'An error occurred. Please try again.');
         }
     };
 
@@ -182,7 +202,11 @@ const LoginScreen = ({ navigation }) => {
                 onChangeText={setPassword}
                 secureTextEntry
             />
-            <Button title="Login" onPress={handleLogin} />
+
+                <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+                            <Text style={styles.loginText}>Login</Text>
+                        </TouchableOpacity>
+            {/* <Button style={styles.loginButton} title="Login" onPress={handleLogin} /> */}
 
             <Text style={styles.link} onPress={() => navigation.navigate('Signup')}>
                 Don't have an account? Sign Up
@@ -393,6 +417,12 @@ const LoginScreen = ({ navigation }) => {
                     </View>
                 </View>
             </Modal>
+            <CustomAlert
+                visible={alertVisible}
+                onClose={() => setAlertVisible(false)}
+                title={alertTitle}
+                message={alertMessage}
+            />
         </View>
     );
 };
@@ -419,15 +449,28 @@ const styles = StyleSheet.create({
     },
     input: {
         height: 40,
-        borderColor: '#6200ea',
+        borderColor: '#000',
         borderWidth: 1,
         borderRadius: 8,
         marginBottom: 12,
         paddingHorizontal: 10,
         backgroundColor: '#fff',
     },
+    loginButton: {
+        backgroundColor: '#1e2a3a',
+        paddingVertical: 12,
+        paddingHorizontal: 25,
+        borderRadius: 5,
+        marginTop: 15,
+        alignItems: 'center',
+    },
+    loginText:{
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: '600',
+    },
     link: {
-        color: '#6200ea',
+        color: '#1e2a3a',
         textAlign: 'center',
         marginTop: 20,
     },
