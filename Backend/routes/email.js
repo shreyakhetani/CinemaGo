@@ -16,7 +16,7 @@ router.post('/send-ticket-email', async (req, res) => {
     const todayDate = getTodayDate();
 
     // Format time exactly like ticket confirmation
-    const helsinkiTime = new Date(new Date(showtime).getTime() + 3 * 60 * 60 * 1000).toLocaleString('en-US', { 
+    const helsinkiTime = new Date(new Date(showtime)).toLocaleString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: false,
